@@ -9,7 +9,8 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
-  bool _isLoading = true; // Track loading state
+  bool _isLoading = true;
+  bool _errorOccurred = false;
 
   @override
   void initState() {
@@ -18,54 +19,86 @@ class _SplashState extends State<Splash> {
   }
 
   Future<void> _loadDataAndNavigate() async {
-    await fetchData(); // Load data first
-
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => Lp()), // Navigate when data is ready
+    try {
+      await fetchData();
+      
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Lp()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorOccurred = true;
+          _isLoading = false;
+        });
+      }
+      // Optionally show error to user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading data: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
   Future<void> fetchData() async {
-    // Simulating actual data fetching (e.g., API call, database query)
-    await Future.delayed(Duration(seconds: 6)); // Example: Data takes 6 sec to load
-    setState(() {
-      _isLoading = false; // Mark data as loaded
-    });
+    // Simulate data loading
+    await Future.delayed(const Duration(seconds: 6));
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Center(
-            child: Column(
-              children: [
-                Image.asset(
-                  "../assets/images/city_guide_logo_black.png",
-                  width: 500,
-                  height: 500,
-                ),
-                const SizedBox(height: 20),
-                if (_isLoading) // Show progress indicator only while loading
-                  CircularProgressIndicator(
-                    strokeWidth: 6,
-                    valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFFE74919),
-),
-                  ),
-              ],
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              "assets/images/city_guide_logo_black.png", // Corrected asset path
+              width: 250, // More reasonable size
+              height: 250,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.error_outline,
+                size: 100,
+                color: Colors.red,
+              ),
             ),
-          ),
-        ],
-    
+            const SizedBox(height: 30),
+            if (_isLoading)
+              CircularProgressIndicator(
+                strokeWidth: 6,
+                valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFFE74919)),
+              ),
+            if (_errorOccurred)
+              Column(
+                children: [
+                  const Text(
+                    'Failed to load data',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: _loadDataAndNavigate,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
-    
     );
-    
   }
 }
+
+
+
