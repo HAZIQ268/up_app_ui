@@ -141,8 +141,8 @@ class DatabaseService {
 
         QuerySnapshot snapshot = await query.get();
         allListings.addAll(snapshot.docs.map((doc) => {
-              'documentId': doc.id, // ✅ Ensure document ID is correctly named
-              'collection': cat, // ✅ Store the collection name
+              'documentId': doc.id, 
+              'collection': cat, 
               ...doc.data() as Map<String, dynamic>
             }));
       }

@@ -164,12 +164,13 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
 
       if (result == "Login Successfully") {
         _showSuccessDialog("You have logged in successfully.");
-
+        
         User? user = FirebaseAuth.instance.currentUser;
         if (user != null) {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           prefs.setString('userName', user.displayName ?? 'Unknown');
           prefs.setString('userEmail', user.email ?? 'Unknown');
+
         } else {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           prefs.setString('userName', 'Guest');

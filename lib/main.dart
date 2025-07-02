@@ -75,29 +75,27 @@ class RoleSelectorScreen extends StatelessWidget {
               Positioned(
                 top: -50,
                 left: -50,
-                child:
-                    Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.1),
-                      ),
-                    ).animate().scale(duration: 1500.ms).fadeIn(),
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                ).animate().scale(duration: 1500.ms).fadeIn(),
               ),
 
               Positioned(
                 bottom: -100,
                 right: -50,
-                child:
-                    Container(
-                      width: 250,
-                      height: 250,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.1),
-                      ),
-                    ).animate().scale(duration: 1500.ms).fadeIn(),
+                child: Container(
+                  width: 250,
+                  height: 250,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                ).animate().scale(duration: 1500.ms).fadeIn(),
               ),
 
               Center(
@@ -120,10 +118,10 @@ class RoleSelectorScreen extends StatelessWidget {
                           ).animate().scale(duration: 800.ms),
 
                           Icon(
-                                Icons.travel_explore,
-                                size: 80,
-                                color: Colors.white,
-                              )
+                            Icons.travel_explore,
+                            size: 80,
+                            color: Colors.white,
+                          )
                               .animate()
                               .fadeIn(duration: 500.ms)
                               .scale(delay: 200.ms)
@@ -146,14 +144,14 @@ class RoleSelectorScreen extends StatelessWidget {
                           ).animate().fadeIn().slideY(begin: -10),
 
                           Text(
-                                'City Guide',
-                                style: TextStyle(
-                                  fontSize: 42,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 1.5,
-                                ),
-                              )
+                            'City Guide',
+                            style: TextStyle(
+                              fontSize: 42,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1.5,
+                            ),
+                          )
                               .animate()
                               .fadeIn(delay: 200.ms)
                               .scaleXY(begin: 0.8)
@@ -174,6 +172,10 @@ class RoleSelectorScreen extends StatelessWidget {
                             subtitle: "Manage city content and users",
                             color: Color(0xFFFF416C),
                             onTap: () => Navigator.pushNamed(context, '/admin'),
+                            // correct code navigator 
+                  //           Navigator.pushReplacement(
+                  // context,
+                  // MaterialPageRoute(builder: (context) => Login()),
                           ).animate().fadeIn(delay: 400.ms).slideX(begin: -50),
 
                           SizedBox(height: 20),
@@ -286,69 +288,16 @@ class RoleSelectorScreen extends StatelessWidget {
   }
 }
 
-// Admin Screen
-
 class AdminScreen extends StatefulWidget {
   @override
   _AdminScreenState createState() => _AdminScreenState();
 }
 
 class _AdminScreenState extends State<AdminScreen> {
-  int userCount = 0;
-  int attractionCount = 0;
-  int cityCount = 0;
-  Map<String, int> cityAttractionCount = {};
   int _selectedIndex = 0;
   String adminName = "Admin User";
   String adminEmail = "admin@cityguide.com";
-  String adminAvatar =
-      "https://st3.depositphotos.com/3431221/13621/v/450/depositphotos_136216036-stock-illustration-man-avatar-icon-hipster-character.jpg";
-
-  @override
-  void initState() {
-    super.initState();
-    fetchCounts();
-  }
-
-  Future<void> fetchCounts() async {
-    try {
-      final userSnapshot =
-          await FirebaseFirestore.instance.collection('users').get();
-      final attractionSnapshot =
-          await FirebaseFirestore.instance.collection('Attractions').get();
-      final citySnapshot =
-          await FirebaseFirestore.instance.collection('cities').get();
-
-      setState(() {
-        userCount = userSnapshot.docs.length;
-        attractionCount = attractionSnapshot.docs.length;
-        cityCount = citySnapshot.docs.length;
-      });
-
-      fetchCityAttractionCounts();
-    } catch (e) {
-      print('Firestore error: $e');
-    }
-  }
-
-  Future<void> fetchCityAttractionCounts() async {
-    try {
-      final attractionSnapshot =
-          await FirebaseFirestore.instance.collection('Attractions').get();
-      Map<String, int> counts = {};
-
-      for (var doc in attractionSnapshot.docs) {
-        final cityId = doc['cat_id'] as String;
-        counts[cityId] = (counts[cityId] ?? 0) + 1;
-      }
-
-      setState(() {
-        cityAttractionCount = counts;
-      });
-    } catch (e) {
-      print('Error fetching city counts: $e');
-    }
-  }
+  String adminAvatar = "https://st3.depositphotos.com/3431221/13621/v/450/depositphotos_136216036-stock-illustration-man-avatar-icon-hipster-character.jpg";
 
   static List<Widget> _widgetOptions = <Widget>[
     DashboardContent(),
@@ -367,63 +316,63 @@ class _AdminScreenState extends State<AdminScreen> {
   void _showAdminProfile(BuildContext context) {
     showDialog(
       context: context,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(adminAvatar),
-                    backgroundColor: Colors.grey[200],
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    adminName,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    adminEmail,
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
-                  SizedBox(height: 20),
-                  Divider(height: 1, color: Colors.grey[300]),
-                  SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: Icon(Icons.logout, size: 20),
-                    label: Text("Logout"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[400],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
           ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 50,
+                backgroundImage: NetworkImage(adminAvatar),
+                backgroundColor: Colors.grey[200],
+              ),
+              SizedBox(height: 16),
+              Text(
+                adminName,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                adminEmail,
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
+              SizedBox(height: 20),
+              Divider(height: 1, color: Colors.grey[300]),
+              SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pushReplacementNamed(context, '/'); // Go to login
+                },
+                icon: Icon(Icons.logout, size: 20),
+                label: Text("Logout"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red[400],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -431,28 +380,59 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(
-        title: Text('City Guide Admin', style: TextStyle(color: Colors.blue)),
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: GestureDetector(
-              onTap: () => _showAdminProfile(context),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundImage: NetworkImage(adminAvatar),
-                backgroundColor: Colors.grey[200],
+      appBar: _selectedIndex == 0
+          ? AppBar(
+              title: Text(
+                'City Guide Admin',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: Offset(2, 2),
+                    )
+                  ],
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
+              centerTitle: true,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF4A00E0), Color(0xFF8E2DE2)],
+                  ),
+                ),
+              ),
+              actions: [
+                Padding(
+                  padding: EdgeInsets.only(right: 16),
+                  child: GestureDetector(
+                    onTap: () => _showAdminProfile(context),
+                    child: Container(
+                      padding: EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [Colors.indigo, Colors.purple],
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 18,
+                        backgroundImage: NetworkImage(adminAvatar),
+                        backgroundColor: Colors.grey[200],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : null,
       body: Container(
+        height: 650,
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: NetworkImage(
-              "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-            ),
+            image: AssetImage("../assets/images/admin_bg_img.jpeg"),
             fit: BoxFit.cover,
           ),
         ),
@@ -481,149 +461,159 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 }
 
-class DashboardContent extends StatelessWidget {
+class DashboardContent extends StatefulWidget {
+  @override
+  _DashboardContentState createState() => _DashboardContentState();
+}
+
+class _DashboardContentState extends State<DashboardContent> {
+  bool isLoading = true;
+  int userCount = 0;
+  int attractionCount = 0;
+  int cityCount = 0;
+  int categoryCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
+  Future<void> fetchData() async {
+    try {
+      final userSnapshot = await FirebaseFirestore.instance.collection('users').get();
+      final attractionSnapshot = await FirebaseFirestore.instance.collection('Attractions').get();
+      final citySnapshot = await FirebaseFirestore.instance.collection('cities').get();
+      
+      // Get unique categories
+      final categories = attractionSnapshot.docs.map((doc) => doc['cat_id']).toSet();
+
+      setState(() {
+        userCount = userSnapshot.docs.length;
+        attractionCount = attractionSnapshot.docs.length;
+        cityCount = citySnapshot.docs.length;
+        categoryCount = categories.length;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching data: $e');
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load data: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final _AdminScreenState? parentState =
-        context.findAncestorStateOfType<_AdminScreenState>();
-
-    if (parentState == null) {
+    if (isLoading) {
       return Center(child: CircularProgressIndicator());
     }
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Welcome Card with Glass Effect
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  color: Colors.white.withOpacity(0.2),
-                  border: Border.all(color: Colors.white.withOpacity(0.3)),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF6A11CB).withOpacity(0.5),
-                      Color(0xFF2575FC).withOpacity(0.5),
+    return RefreshIndicator(
+      onRefresh: fetchData,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Welcome Card with Glass Effect
+            ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    color: Colors.white.withOpacity(0.2),
+                    border: Border.all(color: Colors.white.withOpacity(0.3)),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF6A11CB).withOpacity(0.5),
+                        Color(0xFF2575FC).withOpacity(0.5),
+                      ],
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome Admin!',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Manage your city guide content and analytics dashboard',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Icon(
+                        Icons.analytics_rounded,
+                        size: 50,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
                     ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Welcome Admin!',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Manage your city guide content and analytics dashboard',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white.withOpacity(0.9),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Icon(
-                      Icons.analytics_rounded,
-                      size: 50,
-                      color: Colors.white.withOpacity(0.8),
-                    ),
-                  ],
-                ),
               ),
             ),
-          ),
-          SizedBox(height: 24),
+            SizedBox(height: 24),
 
-          // Stats Grid
-          GridView.count(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.2,
-            children: [
-              _buildGlassStatCard(
-                icon: FontAwesomeIcons.users,
-                title: 'Total Users',
-                value: parentState.userCount,
-                baseColor: Color(0xFF3B82F6),
-              ),
-              _buildGlassStatCard(
-                icon: FontAwesomeIcons.locationDot,
-                title: 'Attractions',
-                value: parentState.attractionCount,
-                baseColor: Color(0xFF10B981),
-              ),
-              _buildGlassStatCard(
-                icon: FontAwesomeIcons.city,
-                title: 'Cities',
-                value: parentState.cityCount,
-                baseColor: Color(0xFFF59E0B),
-              ),
-              _buildGlassStatCard(
-                icon: FontAwesomeIcons.chartPie,
-                title: 'Categories',
-                value: parentState.cityAttractionCount.length,
-                baseColor: Color(0xFF8B5CF6),
-              ),
-            ],
-          ),
-          SizedBox(height: 24),
-
-          // City Attractions
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+            // Stats Grid
+            GridView.count(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.2,
+              children: [
+                _buildGlassStatCard(
+                  icon: FontAwesomeIcons.users,
+                  title: 'Total Users',
+                  value: userCount,
+                  baseColor: Color(0xFF3B82F6),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Attractions by City',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    ...parentState.cityAttractionCount.entries.map(
-                      (entry) => _buildGlassCityCard(entry.key, entry.value),
-                    ),
-                  ],
+                _buildGlassStatCard(
+                  icon: FontAwesomeIcons.locationDot,
+                  title: 'Attractions',
+                  value: attractionCount,
+                  baseColor: Color(0xFF10B981),
                 ),
-              ),
+                _buildGlassStatCard(
+                  icon: FontAwesomeIcons.city,
+                  title: 'Cities',
+                  value: cityCount,
+                  baseColor: Color(0xFFF59E0B),
+                ),
+                _buildGlassStatCard(
+                  icon: FontAwesomeIcons.chartPie,
+                  title: 'Categories',
+                  value: categoryCount,
+                  baseColor: Color(0xFF8B5CF6),
+                ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -691,56 +681,6 @@ class DashboardContent extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGlassCityCard(String city, int count) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(
-          margin: EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.3)),
-          ),
-          child: ListTile(
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(FontAwesomeIcons.city, size: 26, color: Colors.white),
-            ),
-            title: Text(
-              city,
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
-            trailing: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                count.toString(),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
           ),
         ),
       ),

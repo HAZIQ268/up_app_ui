@@ -590,7 +590,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       initialActiveIndex: 0,
       backgroundColor: Colors.white,
       color: Colors.grey,
-      activeColor: Colors.blue,
+      activeColor: Colors.deepPurple,
       onTap: (int index) {
         if (index == 0) {
           Navigator.pushReplacement(
@@ -608,6 +608,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             MaterialPageRoute(builder: (context) => const Profile()),
           );
         }
+        
       },
     );
   }
