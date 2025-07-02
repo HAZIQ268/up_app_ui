@@ -59,6 +59,8 @@ dependencies:
   smooth_page_indicator: ^1.2.1
   liquid_pull_to_refresh: ^3.0.1
   salomon_bottom_bar: ^3.3.2
+  cached_network_image: ^3.2.3
+
  
 
 

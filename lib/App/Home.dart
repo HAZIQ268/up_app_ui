@@ -93,13 +93,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   void _fetchCities() async {
     List<Map<String, dynamic>> fetchedCity = await _databaseService.getCity();
-    // Filter only the 5 popular cities
     List<String> popularCityNames = ['Multan', 'Karachi', 'Abbottabad', 'Islamabad', 'Lahore'];
     List<Map<String, dynamic>> popularCities = fetchedCity
         .where((city) => popularCityNames.contains(city['title']))
         .toList();
 
-    // Ensure correct ordering
     popularCities.sort((a, b) {
       return popularCityNames.indexOf(a['title']).compareTo(popularCityNames.indexOf(b['title']));
     });
@@ -113,128 +111,159 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          'City Guide',
+        title: Text(
+          'Explore Pakistan',
           style: TextStyle(
             color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Poppins',
           ),
         ),
-        centerTitle: true,
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications_none, color: Colors.black),
+            onPressed: () {},
+          ).animate().fadeIn(delay: 200.ms),
+        ],
       ),
       drawer: _buildDrawer(context),
       body: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Banner Image with Search Bar
-            Container(
-              height: 250,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                image: const DecorationImage(
-                  image: NetworkImage('https://images.unsplash.com/photo-1519501025264-65ba15a82390?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2000&q=80'),
-                  fit: BoxFit.cover,
-                ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  )
-                ],
-              ),
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.5),
-                      Colors.black.withOpacity(0.2),
-                    ],
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    )
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: 'Search cities, places...',
+                    hintStyle: TextStyle(color: Colors.grey[500], fontFamily: 'Poppins'),
+                    prefixIcon: Icon(Icons.search, color: Colors.blueGrey[300]),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 15),
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              ).animate().fadeIn(delay: 100.ms),
+            ),
+
+            // Banner
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Container(
+                height: 150,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.3),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    )
+                  ],
+                ),
+                child: Stack(
                   children: [
-                    const Text(
-                      'Discover Amazing Places',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Image.network(
+                        'https://cdn-icons-png.flaticon.com/512/1865/1865269.png',
+                        width: 120,
+                        height: 120,
+                        color: Colors.white.withOpacity(0.2),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Explore the best locations in your city',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            spreadRadius: 2,
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Discover Hidden Gems',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            'Explore the best places in Pakistan',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          Spacer(),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Text(
+                              'Get Started',
+                              style: TextStyle(
+                                color: Color(0xFF2575FC),
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
                           )
                         ],
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          hintText: 'Search for places...',
-                          prefixIcon: const Icon(Icons.search, color: Colors.blue),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 15),
-                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
+              ).animate().fadeIn(delay: 200.ms),
             ),
 
-            // Category Section
-            const Padding(
-              padding: EdgeInsets.only(left: 20, top: 30, bottom: 10),
+            // Categories
+            Padding(
+              padding: const EdgeInsets.only(left: 20, top: 20, bottom: 10),
               child: Text(
-                'Explore Cities:',
+                'Categories',
                 style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Poppins',
                 ),
-              ),
+              ).animate().fadeIn(delay: 300.ms),
             ),
             
-            
-            // Categories Grid - MODIFIED SECTION
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: GridView.builder(
@@ -252,31 +281,30 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     {
                       'name': 'Attractions', 
                       'icon': Icons.landscape, 
-                      'color': Colors.red,
-                      'screen': explore() // Added screen reference
+                      'color': Color(0xFF6A11CB),
+                      'screen': explore()
                     },
                     {
-                      'name': 'Restaurants', 
+                      'name': 'Food', 
                       'icon': Icons.restaurant, 
-                      'color': Colors.green,
-                      'screen': explore() // Added screen reference
+                      'color': Color(0xFFFE5F55),
+                      'screen': explore()
                     },
                     {
                       'name': 'Hotels', 
                       'icon': Icons.hotel, 
-                      'color': Colors.blue,
-                      'screen': explore() // Added screen reference
+                      'color': Color(0xFF2575FC),
+                      'screen': explore()
                     },
-
                     {
                       'name': 'Events', 
                       'icon': Icons.event, 
-                      'color': Colors.orange,
-                      'screen': explore() // Added screen reference
+                      'color': Color(0xFFF9A826),
+                      'screen': explore()
                     },
                   ];
                   
-                  return InkWell( // Wrapped with InkWell
+                  return InkWell(
                     onTap: () {
                       Navigator.push(
                         context,
@@ -286,77 +314,134 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     child: Column(
                       children: [
                         Container(
-                          width: 70,
-                          height: 70,
+                          width: 60,
+                          height: 60,
                           decoration: BoxDecoration(
                             color: categories[index]['color'].withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: categories[index]['color'].withOpacity(0.3),
-                              width: 1,
+                            borderRadius: BorderRadius.circular(15),
+                            gradient: LinearGradient(
+                              colors: [
+                                categories[index]['color'].withOpacity(0.2),
+                                categories[index]['color'].withOpacity(0.4),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
                           ),
                           child: Icon(
                             categories[index]['icon'],
                             color: categories[index]['color'],
-                            size: 35,
+                            size: 30,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           categories[index]['name'],
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 12, 
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Poppins',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ],
-                    ).animate().fadeIn(delay: (100 * index).ms),
+                    ).animate().fadeIn(delay: (100 * index + 300).ms),
                   );
                 },
               ),
             ),
-            
-            // Popular Cities section
+
+            // Popular Cities
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Popular Cities',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const explore()),
-                          );
-                        },
-                        child: const Text(
-                          "See All",
-                          style: TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Popular Cities',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
+                    ),
                   ),
-                  const SizedBox(height: 15),
-                  isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _buildCitiesGrid(),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const explore()),
+                      );
+                    },
+                    child: Text(
+                      "See All",
+                      style: TextStyle(
+                        color: Colors.blue[700],
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
                 ],
-              ),
+              ).animate().fadeIn(delay: 400.ms),
             ),
-            const SizedBox(height: 30),
+            
+            isLoading
+                ? Center(child: CircularProgressIndicator())
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 15,
+                        mainAxisSpacing: 15,
+                        childAspectRatio: 0.8,
+                      ),
+                      itemCount: cities.length,
+                      itemBuilder: (context, index) {
+                        return _buildCityCard(
+                          context: context,
+                          imageUrl: cities[index]['image_url'] ?? '',
+                          title: cities[index]['title'] ?? '',
+                          onTap: () {
+                            switch (cities[index]['title']) {
+                              case 'Karachi':
+                                Navigator.push(
+                                    context, MaterialPageRoute(builder: (context) => KarachiPage()));
+                                break;
+                              case 'Lahore':
+                                Navigator.push(
+                                    context, MaterialPageRoute(builder: (context) => LahorePage()));
+                                break;
+                              case 'Multan':
+                                Navigator.push(
+                                    context, MaterialPageRoute(builder: (context) => Multan()));
+                                break;
+                              case 'Islamabad':
+                                Navigator.push(
+                                    context, MaterialPageRoute(builder: (context) => IslamabadPage()));
+                                break;
+                              case 'Abbottabad':
+                                Navigator.push(
+                                    context, MaterialPageRoute(builder: (context) => Abbotabad()));
+                                break;
+                              default:
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CategoryPage(
+                                        category: cities[index]['title'] ?? ''),
+                                  ),
+                                );
+                                break;
+                            }
+                          },
+                        ).animate().fadeIn(delay: (100 * index + 400).ms);
+                      },
+                    ),
+                  ),
           ],
         ),
       ),
@@ -366,157 +451,150 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   Widget _buildDrawer(BuildContext context) {
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          FutureBuilder<String>(
-            future: getProfileImage(),
-            builder: (context, snapshot) {
-              String profileImageUrl = snapshot.data ??
-                  'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
-              return UserAccountsDrawerHeader(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                ),
-                accountName: Text(
-                  userName,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                accountEmail: Text(userEmail),
-                currentAccountPicture: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  backgroundImage: NetworkImage(profileImageUrl),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Home'),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.explore),
-            title: const Text('Explore'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const explore()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Profile'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const Profile()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
-            onTap: () {
-              // Show settings dialog
-            },
-          ),
-          const Divider(),
-          if (userEmail == "guest@example.com") ...[
-            ListTile(
-              leading: const Icon(Icons.login),
-              title: const Text('Login'),
+      width: MediaQuery.of(context).size.width * 0.8,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+        ),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            FutureBuilder<String>(
+              future: getProfileImage(),
+              builder: (context, snapshot) {
+                String profileImageUrl = snapshot.data ??
+                    'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+                return Container(
+                  padding: EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundColor: Colors.white,
+                        backgroundImage: NetworkImage(profileImageUrl),
+                      ),
+                      SizedBox(height: 15),
+                      Text(
+                        userName,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        userEmail,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 14,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            _buildDrawerItem(
+              icon: Icons.home_outlined,
+              title: 'Home',
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            _buildDrawerItem(
+              icon: Icons.explore_outlined,
+              title: 'Explore',
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Login()),
+                  MaterialPageRoute(builder: (context) => const explore()),
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.person_add),
-              title: const Text('Sign Up'),
+            _buildDrawerItem(
+              icon: Icons.person_outline,
+              title: 'Profile',
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Signup()),
+                  MaterialPageRoute(builder: (context) => const Profile()),
                 );
               },
             ),
-          ] else ...[
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Logout'),
-              onTap: () async {
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                await prefs.remove('userName');
-                await prefs.remove('userEmail');
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => Login()),
-                );
-              },
+            _buildDrawerItem(
+              icon: Icons.settings_outlined,
+              title: 'Settings',
+              onTap: () {},
             ),
+            Divider(color: Colors.grey[300], indent: 20, endIndent: 20),
+            if (userEmail == "guest@example.com") ...[
+              _buildDrawerItem(
+                icon: Icons.login,
+                title: 'Login',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Login()),
+                  );
+                },
+              ),
+              _buildDrawerItem(
+                icon: Icons.person_add_outlined,
+                title: 'Sign Up',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const Signup()),
+                  );
+                },
+              ),
+            ] else ...[
+              _buildDrawerItem(
+                icon: Icons.logout,
+                title: 'Logout',
+                onTap: () async {
+                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('userName');
+                  await prefs.remove('userEmail');
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => Login()),
+                  );
+                },
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildCitiesGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 15,
-        mainAxisSpacing: 15,
-        childAspectRatio: 0.9,
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.blueGrey[700]),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontFamily: 'Poppins',
+          color: Colors.blueGrey[800],
+        ),
       ),
-      itemCount: cities.length,
-      itemBuilder: (context, index) {
-        return _buildCityCard(
-          context: context,
-          imageUrl: cities[index]['image_url'] ?? '',
-          title: cities[index]['title'] ?? '',
-          onTap: () {
-            switch (cities[index]['title']) {
-              case 'Karachi':
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => KarachiPage()));
-                break;
-              case 'Lahore':
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => LahorePage()));
-                break;
-              case 'Multan':
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => Multan()));
-                break;
-              case 'Islamabad':
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => IslamabadPage()));
-                break;
-              case 'Abbottabad':
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => Abbotabad()));
-                break;
-              default:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CategoryPage(
-                        category: cities[index]['title'] ?? ''),
-                  ),
-                );
-                break;
-            }
-          },
-        ).animate().fadeIn(delay: (100 * index).ms);
-      },
+      onTap: onTap,
     );
   }
 
@@ -529,91 +607,123 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(
+      child: Container(
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 2,
+            )
+          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                child: Image.network(
-                  imageUrl,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (BuildContext context, Widget child,
-                      ImageChunkEvent? loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.image, color: Colors.grey),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          child: Stack(
+            children: [
+              Image.network(
+                imageUrl,
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+                loadingBuilder: (BuildContext context, Widget child,
+                    ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[200],
+                  child: Center(child: Icon(Icons.image, color: Colors.grey)),
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.7),
+                    ],
                   ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              Positioned(
+                bottom: 15,
+                left: 15,
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Poppins',
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildBottomNavBar() {
-    return ConvexAppBar(
-      style: TabStyle.fixedCircle,
-      items: [
-        TabItem(icon: Icons.home, title: 'Home'),
-        TabItem(icon: Icons.explore, title: 'Explore'),
-        TabItem(icon: Icons.person, title: 'Profile'),
-      ],
-      initialActiveIndex: 0,
-      backgroundColor: Colors.white,
-      color: Colors.grey,
-      activeColor: Colors.deepPurple,
-      onTap: (int index) {
-        if (index == 0) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const Home()),
-          );
-        } else if (index == 1) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const explore()),
-          );
-        } else if (index == 2) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const Profile()),
-          );
-        }
-        
-      },
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            spreadRadius: 2,
+          )
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        child: ConvexAppBar(
+          style: TabStyle.fixedCircle,
+          items: [
+            TabItem(icon: Icons.home_outlined, title: 'Home'),
+            TabItem(icon: Icons.explore_outlined, title: 'Explore'),
+            TabItem(icon: Icons.person_outlined, title: 'Profile'),
+          ],
+          initialActiveIndex: 0,
+          backgroundColor: Colors.white,
+          color: Colors.grey,
+          activeColor: Color(0xFF6A11CB),
+          onTap: (int index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const Home()),
+              );
+            } else if (index == 1) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const explore()),
+              );
+            } else if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const Profile()),
+              );
+            }
+          },
+        ),
+      ),
     );
   }
 }
-
 
 class CategoryPage extends StatelessWidget {
   final String category;
