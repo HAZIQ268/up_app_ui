@@ -16,12 +16,12 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  // Custom Color Scheme
-  final Color primaryColor = Color(0xFF6A11CB); // Deep Purple
-  final Color secondaryColor = Color(0xFF2575FC); // Blue
-  final Color accentColor = Color(0xFF9C27B0); // Purple Accent
-  final Color textOnPrimary = Colors.white;
-  final Color textOnSecondary = Colors.white;
+  // Modern Color Scheme
+  final Color primaryColor = Color(0xFF6C5CE7); // Vibrant Purple
+  final Color secondaryColor = Color(0xFF00CEFF); // Bright Cyan
+  final Color accentColor = Color(0xFFFD79A8); // Pink Accent
+  final Color darkColor = Color(0xFF2D3436); // Dark Gray
+  final Color lightColor = Color(0xFFDFE6E9); // Light Gray
 
   @override
   void initState() {
@@ -56,233 +56,195 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Animated Background
+          // Modern Gradient Background
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [
-                    primaryColor,
-                    accentColor,
-                    secondaryColor,
+                    primaryColor.withOpacity(0.9),
+                    secondaryColor.withOpacity(0.9),
                   ],
+                ),
+              ),
+              child: Center(
+                child: Opacity(
+                  opacity: 0.1,
+                  child: Icon(
+                    Icons.location_on,
+                    size: 300,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ).animate().fadeIn(duration: 800.ms),
           ),
 
-          // City Skyline Image
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: screenHeight * 0.45,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: const AssetImage(
-                      "../assets/images/pngtree-lahore-skyline-with-color-landmarks-blue-sky-and-copy-space-png-image_15532952.png"),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    primaryColor.withOpacity(0.7),
-                    BlendMode.darken,
-                  ),
-                ),
-              ),
-            ).animate().slideY(
-              begin: -0.5,
-              end: 0,
-              duration: 1000.ms,
-              curve: Curves.easeOutBack,
-            ),
-          ),
-
-          // Content Card
+          // Floating Card Container
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: screenHeight * 0.6,
+              height: screenHeight * 0.65,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(40),
                   topRight: Radius.circular(40),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 20,
+                    color: darkColor.withOpacity(0.2),
+                    blurRadius: 30,
                     spreadRadius: 5,
                   ),
                 ],
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 40),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Title with animation
+                    // App Logo
                     SlideTransition(
                       position: _slideAnimation,
                       child: FadeTransition(
                         opacity: _fadeAnimation,
-                        child: Text(
-                          "Explore the City's Best Spots",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
                             color: primaryColor,
-                            height: 1.2,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: primaryColor.withOpacity(0.4),
+                                blurRadius: 15,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.explore,
+                            size: 50,
+                            color: Colors.white,
                           ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: 30),
 
-                    // Subtitle with animation
+                    // Welcome Text
+                    SlideTransition(
+                      position: _slideAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Column(
+                          children: [
+                            Text(
+                              "Welcome to",
+                              style: TextStyle(
+                                fontSize: 24,
+                                color: darkColor.withOpacity(0.7),
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                            Text(
+                              "City Explorer",
+                              style: TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                                color: darkColor,
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 20),
+
+                    // Description
                     SlideTransition(
                       position: _slideAnimation,
                       child: FadeTransition(
                         opacity: _fadeAnimation,
                         child: Text(
-                          "Discover top attractions, restaurants, hotels and events with our comprehensive city guide",
+                          "Discover hidden gems and popular spots in your city with our local guide",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.grey.shade700,
+                            color: darkColor.withOpacity(0.6),
+                            height: 1.5,
                           ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40),
 
-                    // Buttons with staggered animations
-                    Column(
-                      children: [
-                        // Sign Up Button - Gradient Style
-                        SlideTransition(
-                          position: _slideAnimation,
-                          child: FadeTransition(
-                            opacity: _fadeAnimation,
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [primaryColor, accentColor],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: primaryColor.withOpacity(0.4),
-                                      blurRadius: 10,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      PageRouteBuilder(
-                                        pageBuilder: (context, animation, secondaryAnimation) =>
-                                            const Signup(),
-                                        transitionsBuilder:
-                                            (context, animation, secondaryAnimation, child) {
-                                          return SlideTransition(
-                                            position: Tween<Offset>(
-                                              begin: const Offset(1, 0),
-                                              end: Offset.zero,
-                                            ).animate(animation),
-                                            child: child,
-                                          );
-                                        },
-                                      ),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    shadowColor: Colors.transparent,
-                                    foregroundColor: textOnPrimary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(vertical: 18),
-                                    elevation: 0,
-                                  ),
-                                  child: const Text(
-                                    "Create Account",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                    // Sign Up Button
+                    SlideTransition(
+                      position: _slideAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Container(
+                          width: double.infinity,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(15),
+                            gradient: LinearGradient(
+                              colors: [primaryColor, accentColor],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primaryColor.withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
                           ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Login Button - Outlined Style
-                        SlideTransition(
-                          position: _slideAnimation,
-                          child: FadeTransition(
-                            opacity: _fadeAnimation,
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    PageRouteBuilder(
-                                      pageBuilder: (context, animation, secondaryAnimation) =>
-                                          const Login(),
-                                      transitionsBuilder:
-                                          (context, animation, secondaryAnimation, child) {
-                                        return SlideTransition(
-                                          position: Tween<Offset>(
-                                            begin: const Offset(1, 0),
-                                            end: Offset.zero,
-                                          ).animate(animation),
-                                          child: child,
-                                        );
-                                      },
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: primaryColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                    side: BorderSide(
-                                      color: primaryColor,
-                                      width: 2,
-                                    ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(15),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  PageRouteBuilder(
+                                    pageBuilder: (context, animation, secondaryAnimation) =>
+                                        const Signup(),
+                                    transitionsBuilder:
+                                        (context, animation, secondaryAnimation, child) {
+                                      return SlideTransition(
+                                        position: Tween<Offset>(
+                                          begin: const Offset(1, 0),
+                                          end: Offset.zero,
+                                        ).animate(animation),
+                                        child: child,
+                                      );
+                                    },
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 18),
-                                  elevation: 0,
-                                ),
-                                child: const Text(
-                                  "Sign In",
+                                );
+                              },
+                              child: Center(
+                                child: Text(
+                                  "Get Started",
                                   style: TextStyle(
+                                    color: Colors.white,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -291,12 +253,68 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
 
-                    const SizedBox(height: 30),
+                    SizedBox(height: 20),
 
-                    // Guest Option with animation
+                    // Login Button
+                    SlideTransition(
+                      position: _slideAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Container(
+                          width: double.infinity,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: primaryColor,
+                              width: 2,
+                            ),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(15),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  PageRouteBuilder(
+                                    pageBuilder: (context, animation, secondaryAnimation) =>
+                                        const Login(),
+                                    transitionsBuilder:
+                                        (context, animation, secondaryAnimation, child) {
+                                      return SlideTransition(
+                                        position: Tween<Offset>(
+                                          begin: const Offset(1, 0),
+                                          end: Offset.zero,
+                                        ).animate(animation),
+                                        child: child,
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                              child: Center(
+                                child: Text(
+                                  "I Have an Account",
+                                  style: TextStyle(
+                                    color: primaryColor,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 30),
+
+                    // Guest Option
                     SlideTransition(
                       position: _slideAnimation,
                       child: FadeTransition(
@@ -319,11 +337,11 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                             );
                           },
                           child: Text(
-                            "Continue as Guest",
+                            "Explore as Guest",
                             style: TextStyle(
-                              color: primaryColor,
+                              color: darkColor.withOpacity(0.6),
                               fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -332,36 +350,10 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                   ],
                 ),
               ),
-            ).animate().slide(
-                begin: const Offset(0, 0.5),
+            ).animate().slideY(
               duration: 1000.ms,
+              begin: 0.5,
               curve: Curves.easeOutQuart,
-            ),
-          ),
-
-          // App Logo/Name at top
-          Positioned(
-            top: 60,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Text(
-                "City Guide",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                      blurRadius: 10,
-                      color: Colors.black.withOpacity(0.3),
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(delay: 300.ms).slideY(
-                begin: -0.5,
-                duration: 800.ms,
-              ),
             ),
           ),
         ],
