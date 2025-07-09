@@ -445,7 +445,35 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: ConvexAppBar(
+        style: TabStyle.reactCircle,
+        height: 60,
+        curveSize: 80,
+        items: [
+          TabItem(icon: Icons.home_outlined, title: 'Home'),
+          TabItem(icon: Icons.explore_outlined, title: 'Explore'),
+          TabItem(icon: Icons.person_outline, title: 'Profile'),
+        ],
+        initialActiveIndex: 2,
+        backgroundColor: Colors.white,
+        color: Colors.grey,
+        activeColor: Colors.deepPurple,
+        shadowColor: Colors.deepPurple.withOpacity(0.2),
+        elevation: 5,
+        onTap: (int index) {
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const Home()),
+            );
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => explore()),
+            );
+          }
+        },
+      ).animate().slide(delay: 1000.ms),
     );
   }
 
@@ -671,54 +699,6 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 2,
-          )
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        child: ConvexAppBar(
-          style: TabStyle.fixedCircle,
-          items: [
-            TabItem(icon: Icons.home_outlined, title: 'Home'),
-            TabItem(icon: Icons.explore_outlined, title: 'Explore'),
-            TabItem(icon: Icons.person_outlined, title: 'Profile'),
-          ],
-          initialActiveIndex: 0,
-          backgroundColor: Colors.white,
-          color: Colors.grey,
-          activeColor: Color(0xFF6A11CB),
-          onTap: (int index) {
-            if (index == 0) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const Home()),
-              );
-            } else if (index == 1) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const explore()),
-              );
-            } else if (index == 2) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const Profile()),
-              );
-            }
-          },
         ),
       ),
     );

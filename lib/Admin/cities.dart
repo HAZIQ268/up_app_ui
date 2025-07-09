@@ -1,476 +1,525 @@
-import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-class CitiesScreen extends StatefulWidget {
-  const CitiesScreen({super.key});
+class CitiesAdminPanel extends StatefulWidget {
+  const CitiesAdminPanel({super.key});
 
   @override
-  State<CitiesScreen> createState() => _CitiesScreenState();
+  State<CitiesAdminPanel> createState() => _CitiesAdminPanelState();
 }
 
-class _CitiesScreenState extends State<CitiesScreen> {
-  List<Map<String, dynamic>> _cities = [];
-  List<Map<String, dynamic>> _filteredCities = [];
-  bool _isLoading = true;
-  final TextEditingController _searchController = TextEditingController();
+class _CitiesAdminPanelState extends State<CitiesAdminPanel> {
+  List<Map<String, dynamic>> _products = [];
+  List<Map<String, dynamic>> _filteredProducts = [];
+  TextEditingController searchController = TextEditingController();
+  bool isLoading = true;
+  String _sortCriterion = 'Name';
 
   @override
   void initState() {
     super.initState();
-    _fetchCities();
+    fetchData();
   }
 
-  Future<void> _fetchCities() async {
+  Future<void> fetchData() async {
     try {
-      final snapshot =
-          await FirebaseFirestore.instance.collection('cities').get();
-      final cities =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return data;
-          }).toList();
-
+      final userdata = await FirebaseFirestore.instance.collection('cities').get();
+      final rawdata = userdata.docs.map((doc) => doc.data()..['id'] = doc.id).toList();
       setState(() {
-        _cities = cities;
-        _filteredCities = cities;
-        _isLoading = false;
+        _products = rawdata;
+        _filteredProducts = rawdata;
+        isLoading = false;
+        _sortProducts(_sortCriterion);
       });
     } catch (e) {
-      print("Error fetching cities: $e");
-      setState(() => _isLoading = false);
+      setState(() => isLoading = false);
+      _showSnackBar('Error fetching cities: $e', isError: true);
     }
   }
 
-  Future<void> _updateCity(String docId, Map<String, dynamic> newData) async {
+  Future<void> updateData(String docId, Map<String, dynamic> newData) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('cities')
-          .doc(docId)
-          .update(newData);
-      _fetchCities();
+      await FirebaseFirestore.instance.collection('cities').doc(docId).update(newData);
+      _showSnackBar('City updated successfully!');
+      fetchData();
     } catch (e) {
-      print("Error updating city: $e");
+      _showSnackBar('Error updating city: $e', isError: true);
     }
   }
 
-  Future<void> _deleteCity(String docId) async {
+  Future<void> deleteData(String docId) async {
     try {
       await FirebaseFirestore.instance.collection('cities').doc(docId).delete();
-      _fetchCities();
+      _showSnackBar('City deleted successfully!');
+      fetchData();
     } catch (e) {
-      print("Error deleting city: $e");
+      _showSnackBar('Error deleting city: $e', isError: true);
     }
   }
 
-  void _showDeleteDialog(String docId) {
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  void _deleteDialog(String docId, String cityName) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text('Confirm Delete'),
-            content: Text('Are you sure you want to delete this city?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  _deleteCity(docId);
-                  Navigator.pop(context);
-                },
-                child: Text('Delete', style: TextStyle(color: Colors.red)),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text('Delete City', 
+               style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
+        content: Text('Are you sure you want to delete "$cityName"?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600)),
           ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () {
+              deleteData(docId);
+              Navigator.of(context).pop();
+            },
+            child: Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 
   void _showEditDialog(Map<String, dynamic> city) {
     final formKey = GlobalKey<FormState>();
-    final titleController = TextEditingController(text: city['title'] ?? '');
-    final descriptionController = TextEditingController(
-      text: city['description'] ?? '',
-    );
-    final imageController = TextEditingController(
-      text: city['image_url'] ?? '',
-    );
+    final controllers = {
+      "description": TextEditingController(text: city["description"]),
+      "image_url": TextEditingController(text: city["image_url"]),
+      "title": TextEditingController(text: city["title"]),
+    };
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Edit City', 
+                     style: TextStyle(
+                       fontSize: 22,
+                       fontWeight: FontWeight.bold,
+                       color: Colors.blue.shade800,
+                     )),
+                IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
             ),
-            child: Padding(
-              padding: EdgeInsets.all(20),
-              child: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Edit City',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    TextFormField(
-                      controller: titleController,
-                      decoration: InputDecoration(
-                        labelText: 'City Name',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    SizedBox(height: 16),
-                    TextFormField(
-                      controller: descriptionController,
-                      decoration: InputDecoration(
-                        labelText: 'Description',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      maxLines: 3,
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    SizedBox(height: 16),
-                    TextFormField(
-                      controller: imageController,
-                      decoration: InputDecoration(
-                        labelText: 'Image URL',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            foregroundColor: Colors.white,
+            Divider(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    children: [
+                      _buildFormField(controllers["title"]!, 'City Name', Icons.location_city),
+                      SizedBox(height: 20),
+                      _buildFormField(controllers["description"]!, 'Description', Icons.description, maxLines: 4),
+                      SizedBox(height: 20),
+                      _buildFormField(controllers["image_url"]!, 'Image URL', Icons.image),
+                      SizedBox(height: 20),
+                      if (controllers["image_url"]!.text.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            controllers["image_url"]!.text,
+                            height: 150,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 150,
+                              color: Colors.grey.shade200,
+                              child: Icon(Icons.broken_image, size: 50, color: Colors.grey.shade400),
+                            ),
                           ),
-                          onPressed: () {
-                            if (formKey.currentState!.validate()) {
-                              _updateCity(city['id'], {
-                                'title': titleController.text,
-                                'description': descriptionController.text,
-                                'image_url': imageController.text,
-                              });
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: Text('Update'),
                         ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade800,
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  final updatedData = {
+                    "description": controllers["description"]!.text,
+                    "image_url": controllers["image_url"]!.text,
+                    "title": controllers["title"]!.text,
+                  };
+                  updateData(city["id"], updatedData);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: Text('Save Changes', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  void _showAddDialog() {
+  Widget _buildFormField(TextEditingController controller, String label, IconData icon, {int maxLines = 1}) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.blue.shade800),
+        prefixIcon: Icon(icon, color: Colors.blue.shade800),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.blue.shade800, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+      ),
+      validator: (value) => value!.isEmpty ? 'Required' : null,
+    );
+  }
+
+  void _showAddCityDialog() {
     final formKey = GlobalKey<FormState>();
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final imageController = TextEditingController();
+    final controllers = {
+      "description": TextEditingController(),
+      "image_url": TextEditingController(),
+      "title": TextEditingController(),
+    };
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Add New City', 
+                     style: TextStyle(
+                       fontSize: 22,
+                       fontWeight: FontWeight.bold,
+                       color: Colors.blue.shade800,
+                     )),
+                IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
             ),
-            child: Padding(
-              padding: EdgeInsets.all(20),
-              child: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Add New City',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    TextFormField(
-                      controller: titleController,
-                      decoration: InputDecoration(
-                        labelText: 'City Name',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    SizedBox(height: 16),
-                    TextFormField(
-                      controller: descriptionController,
-                      decoration: InputDecoration(
-                        labelText: 'Description',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      maxLines: 3,
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    SizedBox(height: 16),
-                    TextFormField(
-                      controller: imageController,
-                      decoration: InputDecoration(
-                        labelText: 'Image URL',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            foregroundColor: Colors.white,
+            Divider(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    children: [
+                      _buildFormField(controllers["title"]!, 'City Name', Icons.location_city),
+                      SizedBox(height: 20),
+                      _buildFormField(controllers["description"]!, 'Description', Icons.description, maxLines: 4),
+                      SizedBox(height: 20),
+                      _buildFormField(controllers["image_url"]!, 'Image URL', Icons.image),
+                      SizedBox(height: 20),
+                      if (controllers["image_url"]!.text.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            controllers["image_url"]!.text,
+                            height: 150,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 150,
+                              color: Colors.grey.shade200,
+                              child: Icon(Icons.broken_image, size: 50, color: Colors.grey.shade400),
+                            ),
                           ),
-                          onPressed: () {
-                            if (formKey.currentState!.validate()) {
-                              FirebaseFirestore.instance
-                                  .collection('cities')
-                                  .add({
-                                    'title': titleController.text,
-                                    'description': descriptionController.text,
-                                    'image_url': imageController.text,
-                                  })
-                                  .then((_) {
-                                    _fetchCities();
-                                    Navigator.pop(context);
-                                  });
-                            }
-                          },
-                          child: Text('Add'),
                         ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade800,
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  final newCity = {
+                    "description": controllers["description"]!.text,
+                    "image_url": controllers["image_url"]!.text,
+                    "title": controllers["title"]!.text,
+                  };
+                  FirebaseFirestore.instance.collection('cities').add(newCity).then((_) {
+                    fetchData();
+                    Navigator.of(context).pop();
+                  });
+                }
+              },
+              child: Text('Add City', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  void _searchCities(String query) {
+  void _sortProducts(String criterion) {
     setState(() {
-      _filteredCities =
-          query.isEmpty
-              ? List.from(_cities)
-              : _cities.where((city) {
-                final name = city['title']?.toLowerCase() ?? '';
-                return name.contains(query.toLowerCase());
-              }).toList();
+      _sortCriterion = criterion;
+      _filteredProducts.sort((a, b) => a['title'].compareTo(b['title']));
+    });
+  }
+
+  void _searchProducts(String query) {
+    setState(() {
+      _filteredProducts = _products.where((city) {
+        final name = city['title'].toLowerCase();
+        return name.contains(query.toLowerCase());
+      }).toList();
+      _sortProducts(_sortCriterion);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.blue.shade800,
+          statusBarIconBrightness: Brightness.light,
+        ),
         title: Text('Cities Management', style: TextStyle(color: Colors.white)),
         centerTitle: true,
+         backgroundColor: Colors.indigo,
+        elevation: 0,
         actions: [
           IconButton(
             icon: Icon(Icons.add, color: Colors.white),
-            onPressed: _showAddDialog,
-            tooltip: 'Add City',
+            onPressed: _showAddCityDialog,
           ),
         ],
       ),
-      body:
-          _isLoading
-              ? Center(child: CircularProgressIndicator())
-              : Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(16),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator(color: Colors.blue.shade800))
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
                     child: TextField(
-                      controller: _searchController,
+                      controller: searchController,
                       decoration: InputDecoration(
                         hintText: 'Search cities...',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[200],
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
+                        prefixIcon: Icon(Icons.search, color: Colors.blue.shade800),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                       ),
-                      onChanged: _searchCities,
+                      onChanged: _searchProducts,
                     ),
                   ),
-                  Expanded(
-                    child:
-                        _filteredCities.isEmpty
-                            ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    FontAwesomeIcons.city,
-                                    size: 48,
-                                    color: Colors.grey,
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'No cities found',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  SizedBox(height: 8),
-                                  TextButton(
-                                    onPressed: _showAddDialog,
-                                    child: Text('Add your first city'),
-                                  ),
-                                ],
-                              ),
-                            )
-                            : ListView.builder(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: _filteredCities.length,
-                              itemBuilder: (context, index) {
-                                final city = _filteredCities[index];
-                                return Card(
-                                  elevation: 4,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  margin: EdgeInsets.only(bottom: 16),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(12),
-                                    onTap: () => _showEditDialog(city),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    children: [
+                      Text('Sort by:', style: TextStyle(color: Colors.grey.shade700)),
+                      SizedBox(width: 10),
+                      ChoiceChip(
+                        label: Text('Name'),
+                        selected: _sortCriterion == 'Name',
+                        onSelected: (selected) => _sortProducts('Name'),
+                        selectedColor: Colors.blue.shade800,
+                        labelStyle: TextStyle(
+                          color: _sortCriterion == 'Name' ? Colors.white : Colors.grey.shade800),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 10),
+                Expanded(
+                  child: _filteredProducts.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search_off, size: 60, color: Colors.grey.shade400),
+                              SizedBox(height: 10),
+                              Text('No cities found', style: TextStyle(color: Colors.grey.shade600)),
+                              if (searchController.text.isNotEmpty)
+                                TextButton(
+                                  onPressed: () {
+                                    searchController.clear();
+                                    _searchProducts('');
+                                  },
+                                  child: Text('Clear search', style: TextStyle(color: Colors.blue.shade800)),
+                                ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: EdgeInsets.only(bottom: 16),
+                          itemCount: _filteredProducts.length,
+                          itemBuilder: (context, index) {
+                            final city = _filteredProducts[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                              child: Card(
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onTap: () => _showEditDialog(city),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        if (city["image_url"] != null &&
-                                            city["image_url"].isNotEmpty)
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.vertical(
-                                              top: Radius.circular(12),
-                                            ),
-                                            child: Image.network(
-                                              city["image_url"],
-                                              height: 180,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) => Container(
-                                                    height: 180,
-                                                    color: Colors.grey[200],
-                                                    child: Center(
-                                                      child: Icon(
-                                                        Icons.broken_image,
-                                                      ),
-                                                    ),
-                                                  ),
+                                        if (city["image_url"] != null && city["image_url"].isNotEmpty)
+                                          Container(
+                                            width: 80,
+                                            height: 80,
+                                            margin: EdgeInsets.only(right: 12),
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(12),
+                                              image: DecorationImage(
+                                                image: NetworkImage(city["image_url"]),
+                                                fit: BoxFit.cover,
+                                              ),
                                             ),
                                           ),
-                                        Padding(
-                                          padding: EdgeInsets.all(16),
+                                        Expanded(
                                           child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                city["title"] ?? '',
+                                                city["title"],
                                                 style: TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold,
+                                                  color: Colors.blue.shade800,
                                                 ),
                                               ),
-                                              SizedBox(height: 8),
+                                              SizedBox(height: 5),
                                               Text(
-                                                city["description"] ?? '',
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  color: Colors.grey[700],
-                                                ),
-                                              ),
-                                              SizedBox(height: 12),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.end,
-                                                children: [
-                                                  IconButton(
-                                                    icon: Icon(
-                                                      Icons.edit,
-                                                      color: Colors.blue,
-                                                    ),
-                                                    onPressed:
-                                                        () => _showEditDialog(
-                                                          city,
-                                                        ),
-                                                  ),
-                                                  IconButton(
-                                                    icon: Icon(
-                                                      Icons.delete,
-                                                      color: Colors.red,
-                                                    ),
-                                                    onPressed:
-                                                        () => _showDeleteDialog(
-                                                          city["id"],
-                                                        ),
-                                                  ),
-                                                ],
+                                                city["description"]?.length > 50
+                                                    ? '${city["description"].substring(0, 50)}...'
+                                                    : city["description"] ?? '',
+                                                style: TextStyle(color: Colors.grey.shade700),
                                               ),
                                             ],
                                           ),
                                         ),
+                                        PopupMenuButton(
+                                          icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
+                                          itemBuilder: (context) => [
+                                            PopupMenuItem(
+                                              child: ListTile(
+                                                leading: Icon(Icons.edit, color: Colors.blue.shade800),
+                                                title: Text('Edit'),
+                                                onTap: () {
+                                                  Navigator.pop(context);
+                                                  _showEditDialog(city);
+                                                },
+                                              ),
+                                            ),
+                                            PopupMenuItem(
+                                              child: ListTile(
+                                                leading: Icon(Icons.delete, color: Colors.red),
+                                                title: Text('Delete'),
+                                                onTap: () {
+                                                  Navigator.pop(context);
+                                                  _deleteDialog(city["id"], city["title"]);
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                   ),
-                                );
-                              },
-                            ),
-                  ),
-                ],
-              ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
     );
   }
 }

@@ -1,10 +1,16 @@
 import 'dart:ui';
-
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:city_guide_app/Admin/Islamabad.dart';
+import 'package:city_guide_app/Admin/abbottabad.dart';
+import 'package:city_guide_app/Admin/karachi.dart';
+import 'package:city_guide_app/Admin/lahore.dart';
+import 'package:city_guide_app/Admin/login.dart';
+import 'package:city_guide_app/Admin/multan.dart';
+import 'package:city_guide_app/Admin/product.dart';
 import 'package:city_guide_app/firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:city_guide_app/Admin/cities.dart';
@@ -294,23 +300,50 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> {
-  int _selectedIndex = 0;
-  String adminName = "Admin User";
-  String adminEmail = "admin@cityguide.com";
-  String adminAvatar = "https://st3.depositphotos.com/3431221/13621/v/450/depositphotos_136216036-stock-illustration-man-avatar-icon-hipster-character.jpg";
+  late User? _currentUser;
+  String adminName = "Loading...";
+  String adminEmail = "Loading...";
+  String adminAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+  
+  int userCount = 0;
+  int bookCount = 0;
+  int categoryCount = 0;
+  Map<String, int> categoryBookCount = {};
+  bool isLoading = true;
+  String errorMessage = '';
 
-  static List<Widget> _widgetOptions = <Widget>[
-    DashboardContent(),
-    CitiesScreen(),
-    Restaurants(),
-    HotelsScreen(),
-    FetchData(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = FirebaseAuth.instance.currentUser;
+    _loadAdminData();
+    fetchCounts();
+  }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  Future<void> _loadAdminData() async {
+    try {
+      if (_currentUser != null) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .get();
+
+        if (userDoc.exists) {
+          setState(() {
+            adminName = userDoc['name'] ?? _currentUser!.displayName ?? "Admin User";
+            adminEmail = _currentUser!.email ?? "admin@cityguide.com";
+            adminAvatar = userDoc['profileImage'] ?? 
+                         _currentUser!.photoURL ?? 
+                         "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+          });
+        }
+      }
+    } catch (e) {
+      setState(() {
+        adminName = "Admin User";
+        adminEmail = "admin@cityguide.com";
+      });
+    }
   }
 
   void _showAdminProfile(BuildContext context) {
@@ -331,7 +364,7 @@ class _AdminScreenState extends State<AdminScreen> {
             children: [
               CircleAvatar(
                 radius: 50,
-                backgroundImage: NetworkImage(adminAvatar),
+                backgroundImage: CachedNetworkImageProvider(adminAvatar),
                 backgroundColor: Colors.grey[200],
               ),
               SizedBox(height: 16),
@@ -352,9 +385,12 @@ class _AdminScreenState extends State<AdminScreen> {
               Divider(height: 1, color: Colors.grey[300]),
               SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pushReplacementNamed(context, '/'); // Go to login
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
                 },
                 icon: Icon(Icons.logout, size: 20),
                 label: Text("Logout"),
@@ -376,269 +412,290 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      appBar: _selectedIndex == 0
-          ? AppBar(
-              title: Text(
-                'City Guide Admin',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 10,
-                      offset: Offset(2, 2),
-                    )
-                  ],
-                ),
-              ),
-              centerTitle: true,
-              flexibleSpace: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF4A00E0), Color(0xFF8E2DE2)],
-                  ),
-                ),
-              ),
-              actions: [
-                Padding(
-                  padding: EdgeInsets.only(right: 16),
-                  child: GestureDetector(
-                    onTap: () => _showAdminProfile(context),
-                    child: Container(
-                      padding: EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [Colors.indigo, Colors.purple],
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundImage: NetworkImage(adminAvatar),
-                        backgroundColor: Colors.grey[200],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          : null,
-      body: Container(
-        height: 650,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("../assets/images/admin_bg_img.jpeg"),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: _widgetOptions.elementAt(_selectedIndex),
-      ),
-      bottomNavigationBar: ConvexAppBar(
-        items: [
-          TabItem(icon: Icons.dashboard_rounded, title: 'Dashboard'),
-          TabItem(icon: Icons.location_city_rounded, title: 'Cities'),
-          TabItem(icon: Icons.restaurant_rounded, title: 'Restaurants'),
-          TabItem(icon: Icons.hotel_rounded, title: 'Hotels'),
-          TabItem(icon: Icons.people_rounded, title: 'Users'),
-        ],
-        initialActiveIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        backgroundColor: Colors.white,
-        color: Colors.grey[600],
-        activeColor: Colors.deepPurple,
-        curveSize: 80,
-        height: 56,
-        style: TabStyle.reactCircle,
-        elevation: 5,
-        top: -20,
-      ),
-    );
-  }
-}
-
-class DashboardContent extends StatefulWidget {
-  @override
-  _DashboardContentState createState() => _DashboardContentState();
-}
-
-class _DashboardContentState extends State<DashboardContent> {
-  bool isLoading = true;
-  int userCount = 0;
-  int attractionCount = 0;
-  int cityCount = 0;
-  int categoryCount = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchData();
-  }
-
-  Future<void> fetchData() async {
+  void fetchCounts() async {
     try {
       final userSnapshot = await FirebaseFirestore.instance.collection('users').get();
-      final attractionSnapshot = await FirebaseFirestore.instance.collection('Attractions').get();
-      final citySnapshot = await FirebaseFirestore.instance.collection('cities').get();
-      
-      // Get unique categories
-      final categories = attractionSnapshot.docs.map((doc) => doc['cat_id']).toSet();
+      final bookSnapshot = await FirebaseFirestore.instance.collection('Attractions').get();
+      final categorySnapshot = await FirebaseFirestore.instance.collection('cities').get();
 
       setState(() {
         userCount = userSnapshot.docs.length;
-        attractionCount = attractionSnapshot.docs.length;
-        cityCount = citySnapshot.docs.length;
-        categoryCount = categories.length;
-        isLoading = false;
+        bookCount = bookSnapshot.docs.length;
+        categoryCount = categorySnapshot.docs.length;
       });
+
+      await fetchCategoryCounts();
     } catch (e) {
-      print('Error fetching data: $e');
+      setState(() {
+        errorMessage = 'Error fetching data: $e';
+      });
+    } finally {
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load data: $e')),
-      );
+    }
+  }
+
+  Future<void> fetchCategoryCounts() async {
+    try {
+      final bookSnapshot = await FirebaseFirestore.instance.collection('Attractions').get();
+      Map<String, int> categoryCounts = {};
+
+      for (var doc in bookSnapshot.docs) {
+        final data = doc.data();
+        final categoryId = data['cat_id']?.toString() ?? 'unknown';
+        categoryCounts[categoryId] = (categoryCounts[categoryId] ?? 0) + 1;
+      }
+
+      setState(() {
+        categoryBookCount = categoryCounts;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error fetching category counts: $e';
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return Center(child: CircularProgressIndicator());
-    }
-
-    return RefreshIndicator(
-      onRefresh: fetchData,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Card with Glass Effect
-            ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    color: Colors.white.withOpacity(0.2),
-                    border: Border.all(color: Colors.white.withOpacity(0.3)),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF6A11CB).withOpacity(0.5),
-                        Color(0xFF2575FC).withOpacity(0.5),
-                      ],
-                    ),
-                  ),
-                  child: Row(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Admin Dashboard'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications, color: Colors.indigo),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: CircleAvatar(
+              radius: 16,
+              backgroundImage: CachedNetworkImageProvider(adminAvatar),
+              child: adminAvatar.isEmpty 
+                  ? Icon(Icons.person, size: 18, color: Colors.indigo)
+                  : null,
+            ),
+            onPressed: () => _showAdminProfile(context),
+          ),
+          SizedBox(width: 16),
+        ],
+      ),
+      drawer: DashboardDrawer(
+        adminName: adminName,
+        adminEmail: adminEmail,
+        adminAvatar: adminAvatar,
+      ),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo)))
+          : errorMessage.isNotEmpty
+              ? Center(
+                  child: Text(errorMessage, style: TextStyle(color: Colors.red)))
+              : SingleChildScrollView(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
+                      // Welcome Card with Glass Morphism Effect
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.indigo.shade600,
+                              Colors.blue.shade400
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.3),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                              offset: Offset(0, 10),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Welcome Admin!',
+                              'Welcome Back, $adminName!',
                               style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
                                 color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
                               ),
                             ),
                             SizedBox(height: 8),
                             Text(
-                              'Manage your city guide content and analytics dashboard',
+                              'Manage your city guide app with powerful insights',
                               style: TextStyle(
-                                fontSize: 14,
                                 color: Colors.white.withOpacity(0.9),
+                                fontSize: 16,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(width: 10),
-                      Icon(
-                        Icons.analytics_rounded,
-                        size: 50,
-                        color: Colors.white.withOpacity(0.8),
+                      SizedBox(height: 24),
+
+                      // Stats Overview
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          'Dashboard Overview',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.indigo,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
+                      SizedBox(height: 16),
+
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.1,
+                        children: [
+                          _buildStatCard(
+                            icon: Icons.people_alt_rounded,
+                            title: 'Total Users',
+                            value: userCount.toString(),
+                            color: Colors.purpleAccent,
+                          ),
+                          _buildStatCard(
+                            icon: Icons.place_rounded,
+                            title: 'Attractions',
+                            value: bookCount.toString(),
+                            color: Colors.orangeAccent,
+                          ),
+                          _buildStatCard(
+                            icon: Icons.location_city_rounded,
+                            title: 'Cities',
+                            value: categoryCount.toString(),
+                            color: Colors.greenAccent,
+                          ),
+                          _buildStatCard(
+                            icon: Icons.category_rounded,
+                            title: 'Categories',
+                            value: categoryBookCount.length.toString(),
+                            color: Colors.blueAccent,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 24),
+
+                      // Attractions by City
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Attractions by City',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.indigo,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.refresh, color: Colors.indigo),
+                              onPressed: fetchCounts,
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 16),
+
+                      if (categoryBookCount.isNotEmpty)
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.5,
+                          children: categoryBookCount.entries.map((entry) {
+                            return _buildCityCard(
+                              cityId: entry.key,
+                              count: entry.value,
+                            );
+                          }).toList(),
+                        )
+                      else
+                        Container(
+                          height: 100,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.indigo)),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: 24),
-
-            // Stats Grid
-            GridView.count(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.2,
-              children: [
-                _buildGlassStatCard(
-                  icon: FontAwesomeIcons.users,
-                  title: 'Total Users',
-                  value: userCount,
-                  baseColor: Color(0xFF3B82F6),
-                ),
-                _buildGlassStatCard(
-                  icon: FontAwesomeIcons.locationDot,
-                  title: 'Attractions',
-                  value: attractionCount,
-                  baseColor: Color(0xFF10B981),
-                ),
-                _buildGlassStatCard(
-                  icon: FontAwesomeIcons.city,
-                  title: 'Cities',
-                  value: cityCount,
-                  baseColor: Color(0xFFF59E0B),
-                ),
-                _buildGlassStatCard(
-                  icon: FontAwesomeIcons.chartPie,
-                  title: 'Categories',
-                  value: categoryCount,
-                  baseColor: Color(0xFF8B5CF6),
-                ),
-              ],
-            ),
-          ],
-        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Add action
+        },
+        backgroundColor: Colors.indigo,
+        child: Icon(Icons.add, color: Colors.white),
+        elevation: 4,
       ),
     );
   }
 
-  Widget _buildGlassStatCard({
+  Widget _buildStatCard({
     required IconData icon,
     required String title,
-    required int value,
-    required Color baseColor,
+    required String value,
+    required Color color,
   }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: baseColor.withOpacity(0.2),
-            border: Border.all(color: Colors.white.withOpacity(0.3)),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [baseColor.withOpacity(0.3), baseColor.withOpacity(0.1)],
-            ),
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [color.withOpacity(0.1), color.withOpacity(0.2)],
           ),
+        ),
+        child: Padding(
           padding: EdgeInsets.all(16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -649,40 +706,392 @@ class _DashboardContentState extends State<DashboardContent> {
                   Container(
                     padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: baseColor.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white.withOpacity(0.9),
+                      shape: BoxShape.circle,
                     ),
-                    child: FaIcon(icon, size: 30, color: Colors.white),
+                    child: Icon(
+                      icon,
+                      color: color,
+                      size: 24,
+                    ),
                   ),
                   Spacer(),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: baseColor.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      value.toString(),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  Icon(Icons.more_vert, color: Colors.grey.shade400, size: 20),
                 ],
               ),
-              SizedBox(height: 12),
+              SizedBox(height: 16),
               Text(
                 title,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.indigo.shade800,
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCityCard({
+    required String cityId,
+    required int count,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.location_city_rounded,
+                    color: Colors.indigo,
+                    size: 24,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('cities')
+                        .doc(cityId)
+                        .get(),
+                    builder: (context, snapshot) {
+                      String cityName = "City $cityId";
+                      if (snapshot.hasData && snapshot.data!.exists) {
+                        cityName = snapshot.data!['name'] ?? cityName;
+                      }
+                      return Text(
+                        cityName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.indigo.shade800,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
+            LinearProgressIndicator(
+              value: count / 50,
+              backgroundColor: Colors.indigo.withOpacity(0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo),
+              minHeight: 6,
+              borderRadius: BorderRadius.circular(3),
+            ),
+            SizedBox(height: 12),
+            Row(
+              children: [
+                Text(
+                  'Attractions:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Spacer(),
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.indigo,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class DashboardDrawer extends StatelessWidget {
+  final String adminName;
+  final String adminEmail;
+  final String adminAvatar;
+
+  const DashboardDrawer({
+    Key? key,
+    required this.adminName,
+    required this.adminEmail,
+    required this.adminAvatar,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white, Color(0xFFF5F9FF)],
+          ),
+        ),
+        child: Column(
+          children: [
+            UserAccountsDrawerHeader(
+              accountName: Text(
+                adminName,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              accountEmail: Text(adminEmail),
+              currentAccountPicture: CircleAvatar(
+                backgroundImage: CachedNetworkImageProvider(adminAvatar),
+                backgroundColor: Colors.grey[200],
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.indigo.shade600, Colors.blue.shade400],
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  SizedBox(height: 8),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.dashboard_rounded,
+                    title: 'Dashboard',
+                    isSelected: true,
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.people_alt_rounded,
+                    title: 'User Management',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => UserManagementScreen()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.place_rounded,
+                    title: 'Attractions',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Attractions()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.location_city_rounded,
+                    title: 'Cities',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => CitiesAdminPanel()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.restaurant_rounded,
+                    title: 'Restaurants',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Restaurants()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.hotel_rounded,
+                    title: 'Hotels',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HotelsScreen()),
+                      );
+                    },
+                  ),
+                  Divider(
+                      height: 24,
+                      color: Colors.grey.shade300,
+                      indent: 16,
+                      endIndent: 16),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: Text(
+                      'CITY ATTRACTIONS',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.place_rounded,
+                    title: 'Lahore',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Lahore()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.place_rounded,
+                    title: 'Karachi',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => karachi()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.place_rounded,
+                    title: 'Islamabad',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Islamabad()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.place_rounded,
+                    title: 'Multan',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => multan()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.place_rounded,
+                    title: 'Abbottabad',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => abbottabad()),
+                      );
+                    },
+                  ),
+                  Spacer(),
+                  Divider(height: 1, color: Colors.grey.shade300),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.logout_rounded,
+                    title: 'Logout',
+                    onTap: () async {
+                      await FirebaseAuth.instance.signOut();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginPage()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    bool isSelected = false,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.indigo.withOpacity(0.1) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isSelected ? Colors.indigo : Colors.grey.withOpacity(0.2),
+          ),
+          child: Icon(
+            icon,
+            color: isSelected ? Colors.white : Colors.indigo,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.indigo : Colors.grey.shade800,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
+        trailing: isSelected
+            ? Container(
+                padding: EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.indigo,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.chevron_right, size: 14, color: Colors.white),
+              )
+            : null,
+        onTap: onTap,
       ),
     );
   }

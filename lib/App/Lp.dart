@@ -16,6 +16,13 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+  // Custom Color Scheme
+  final Color primaryColor = Color(0xFF6A11CB); // Deep Purple
+  final Color secondaryColor = Color(0xFF2575FC); // Blue
+  final Color accentColor = Color(0xFF9C27B0); // Purple Accent
+  final Color textOnPrimary = Colors.white;
+  final Color textOnSecondary = Colors.white;
+
   @override
   void initState() {
     super.initState();
@@ -63,9 +70,9 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.deepPurple.shade800,
-                    Colors.purple.shade600,
-                    Colors.purple.shade400,
+                    primaryColor,
+                    accentColor,
+                    secondaryColor,
                   ],
                 ),
               ),
@@ -85,7 +92,7 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                       "../assets/images/pngtree-lahore-skyline-with-color-landmarks-blue-sky-and-copy-space-png-image_15532952.png"),
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(
-                    Colors.deepPurple.withOpacity(0.7),
+                    primaryColor.withOpacity(0.7),
                     BlendMode.darken,
                   ),
                 ),
@@ -135,7 +142,7 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Colors.deepPurple.shade800,
+                            color: primaryColor,
                             height: 1.2,
                           ),
                         ),
@@ -165,48 +172,65 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                     // Buttons with staggered animations
                     Column(
                       children: [
-                        // Sign Up Button
+                        // Sign Up Button - Gradient Style
                         SlideTransition(
                           position: _slideAnimation,
                           child: FadeTransition(
                             opacity: _fadeAnimation,
                             child: SizedBox(
                               width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    PageRouteBuilder(
-                                      pageBuilder: (context, animation, secondaryAnimation) =>
-                                          const Signup(),
-                                      transitionsBuilder:
-                                          (context, animation, secondaryAnimation, child) {
-                                        return SlideTransition(
-                                          position: Tween<Offset>(
-                                            begin: const Offset(1, 0),
-                                            end: Offset.zero,
-                                          ).animate(animation),
-                                          child: child,
-                                        );
-                                      },
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.deepPurple,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [primaryColor, accentColor],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 18),
-                                  elevation: 8,
-                                  shadowColor: Colors.deepPurple.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: primaryColor.withOpacity(0.4),
+                                      blurRadius: 10,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
-                                child: const Text(
-                                  "Create Account",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      PageRouteBuilder(
+                                        pageBuilder: (context, animation, secondaryAnimation) =>
+                                            const Signup(),
+                                        transitionsBuilder:
+                                            (context, animation, secondaryAnimation, child) {
+                                          return SlideTransition(
+                                            position: Tween<Offset>(
+                                              begin: const Offset(1, 0),
+                                              end: Offset.zero,
+                                            ).animate(animation),
+                                            child: child,
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    foregroundColor: textOnPrimary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 18),
+                                    elevation: 0,
+                                  ),
+                                  child: const Text(
+                                    "Create Account",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -216,7 +240,7 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
 
                         const SizedBox(height: 20),
 
-                        // Login Button
+                        // Login Button - Outlined Style
                         SlideTransition(
                           position: _slideAnimation,
                           child: FadeTransition(
@@ -245,11 +269,11 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
-                                  foregroundColor: Colors.deepPurple,
+                                  foregroundColor: primaryColor,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(15),
                                     side: BorderSide(
-                                      color: Colors.deepPurple,
+                                      color: primaryColor,
                                       width: 2,
                                     ),
                                   ),
@@ -297,7 +321,7 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                           child: Text(
                             "Continue as Guest",
                             style: TextStyle(
-                              color: Colors.deepPurple.shade600,
+                              color: primaryColor,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),

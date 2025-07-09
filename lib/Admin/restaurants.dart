@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class Restaurants extends StatefulWidget {
   const Restaurants({super.key});
@@ -13,6 +14,7 @@ class _RestaurantsState extends State<Restaurants> {
   List<Map<String, dynamic>> _filteredProducts = [];
   TextEditingController searchController = TextEditingController();
   bool isLoading = true;
+  String _sortCriteria = 'Rating';
 
   @override
   void initState() {
@@ -20,344 +22,308 @@ class _RestaurantsState extends State<Restaurants> {
     fetchData();
   }
 
-  // Fetch data from Firestore
-  void fetchData() async {
-    final userdata =
-        await FirebaseFirestore.instance.collection('Restaurants').get();
-    final rawdata = userdata.docs
-        .map((doc) => doc.data()..['id'] = doc.id)
-        .toList(); // Add 'id' for each document
-    setState(() {
-      _products = rawdata;
-      _filteredProducts = List.from(rawdata)
-        ..sort((a, b) {
-          double ratingA = double.tryParse(a["rating"].toString()) ?? 0.0;
-          double ratingB = double.tryParse(b["rating"].toString()) ?? 0.0;
-          return ratingB.compareTo(ratingA); // Sort descending
-        });
-      isLoading = false;
-    });
-  }
-
-  // Update data in Firestore
-  void updateData(String docId, Map<String, dynamic> newData) async {
+  Future<void> fetchData() async {
     try {
-      final db = FirebaseFirestore.instance.collection('Restaurants');
-      await db.doc(docId).update(newData); // Use document ID to update
-      print("Restaurants updated successfully!");
-      fetchData(); // Refresh the list after updating
+      final userdata = await FirebaseFirestore.instance.collection('Restaurants').get();
+      final rawdata = userdata.docs.map((doc) => doc.data()..['id'] = doc.id).toList();
+      
+      setState(() {
+        _products = rawdata;
+        _filteredProducts = List.from(rawdata)..sort(_sortByCriteria);
+        isLoading = false;
+      });
     } catch (e) {
-      print("Error updating data: $e");
+      setState(() {
+        isLoading = false;
+      });
+      _showSnackBar('Error fetching data: $e', isError: true);
     }
   }
 
-  // Delete data from Firestore
-  void deleteData(String docId) async {
-    try {
-      final db = FirebaseFirestore.instance.collection('Restaurants');
-      await db.doc(docId).delete(); // Use document ID to delete
-      print("Restaurants deleted successfully!");
-      fetchData(); // Refresh the list after deleting
-    } catch (e) {
-      print("Error deleting data: $e");
+  int _sortByCriteria(a, b) {
+    switch (_sortCriteria) {
+      case 'Rating':
+        double ratingA = double.tryParse(a["rating"].toString()) ?? 0.0;
+        double ratingB = double.tryParse(b["rating"].toString()) ?? 0.0;
+        return ratingB.compareTo(ratingA);
+      case 'Name':
+        return a['name'].compareTo(b['name']);
+      default:
+        return 0;
     }
   }
 
-  // Delete confirmation dialog
+  Future<void> updateData(String docId, Map<String, dynamic> newData) async {
+    try {
+      await FirebaseFirestore.instance.collection('Restaurants').doc(docId).update(newData);
+      _showSnackBar('Restaurant updated successfully!');
+      fetchData();
+    } catch (e) {
+      _showSnackBar('Error updating data: $e', isError: true);
+    }
+  }
+
+  Future<void> deleteData(String docId) async {
+    try {
+      await FirebaseFirestore.instance.collection('Restaurants').doc(docId).delete();
+      _showSnackBar('Restaurant deleted successfully!');
+      fetchData();
+    } catch (e) {
+      _showSnackBar('Error deleting data: $e', isError: true);
+    }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
   void deleteDialog(String docId) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete Confirmation',
-              style: TextStyle(color: Colors.black)),
-          content: const Text('Are you sure you want to delete this product?',
-              style: TextStyle(color: Colors.black)),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+      builder: (context) => AlertDialog(
+        title: Text('Delete Restaurant', 
+               style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
+        content: Text('Are you sure you want to delete this restaurant?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                deleteData(docId);
-                Navigator.of(context).pop();
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.black)),
-            ),
-          ],
-        );
-      },
+            onPressed: () {
+              deleteData(docId);
+              Navigator.of(context).pop();
+            },
+            child: Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 
-  void showEditDialog(Map<String, dynamic> attraction) {
+  void showEditDialog(Map<String, dynamic> restaurant) {
     final formKey = GlobalKey<FormState>();
-    final TextEditingController description =
-        TextEditingController(text: attraction["description"]);
-    final TextEditingController imageurl =
-        TextEditingController(text: attraction["image_url"]);
-    final TextEditingController name =
-        TextEditingController(text: attraction["name"]);
-    final TextEditingController subcategoryController =
-        TextEditingController(text: attraction["subCategory"]);
-    final TextEditingController ratingController =
-        TextEditingController(text: attraction["rating"].toString());
-    final TextEditingController longitudeController =
-        TextEditingController(text: attraction["longitude"].toString());
-    final TextEditingController latitudeController =
-        TextEditingController(text: attraction["latitude"].toString());
-    final TextEditingController location =
-        TextEditingController(text: attraction["location"]);
+    final controllers = {
+      "description": TextEditingController(text: restaurant["description"]),
+      "image_url": TextEditingController(text: restaurant["image_url"]),
+      "name": TextEditingController(text: restaurant["name"]),
+      "subCategory": TextEditingController(text: restaurant["subCategory"]),
+      "rating": TextEditingController(text: restaurant["rating"].toString()),
+      "longitude": TextEditingController(text: restaurant["longitude"].toString()),
+      "latitude": TextEditingController(text: restaurant["latitude"].toString()),
+      "location": TextEditingController(text: restaurant["location"]),
+    };
 
     showDialog(
       context: context,
-      builder: (context) {
-        return Dialog(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Edit Restaurant',
+                     style: TextStyle(
+                       fontSize: 22,
+                       fontWeight: FontWeight.bold,
+                       color: Colors.orange.shade800,
+                     )),
+                SizedBox(height: 20),
+                _buildFormField(controllers["description"]!, 'Description'),
+                _buildFormField(controllers["image_url"]!, 'Image URL'),
+                _buildFormField(controllers["name"]!, 'Restaurant Name'),
+                _buildFormField(controllers["subCategory"]!, 'Cuisine Type'),
+                _buildFormField(controllers["rating"]!, 'Rating', isNumber: true),
+                _buildFormField(controllers["longitude"]!, 'Longitude', isNumber: true),
+                _buildFormField(controllers["latitude"]!, 'Latitude', isNumber: true),
+                _buildFormField(controllers["location"]!, 'Location'),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    TextFormField(
-                      controller: description,
-                      decoration: const InputDecoration(labelText: 'Description'),
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600)),
                     ),
-                    TextFormField(
-                      controller: imageurl,
-                      decoration: const InputDecoration(labelText: 'Image URL'),
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    TextFormField(
-                      controller: name,
-                      decoration: const InputDecoration(labelText: 'Attraction Name'),
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    TextFormField(
-                      controller: subcategoryController,
-                      decoration: const InputDecoration(labelText: 'SubCategory'),
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    TextFormField(
-                      controller: ratingController,
-                      decoration: const InputDecoration(labelText: 'Rating'),
-                      keyboardType: TextInputType.number,
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    TextFormField(
-                      controller: longitudeController,
-                      decoration: const InputDecoration(labelText: 'Longitude'),
-                      keyboardType: TextInputType.number,
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    TextFormField(
-                      controller: latitudeController,
-                      decoration: const InputDecoration(labelText: 'Latitude'),
-                      keyboardType: TextInputType.number,
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    TextFormField(
-                      controller: location,
-                      decoration: const InputDecoration(labelText: 'Location'),
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Cancel'),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade800,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (formKey.currentState!.validate()) {
-                              final updatedData = {
-                                "description": description.text,
-                                "image_url": imageurl.text,
-                                "name": name.text,
-                                "subCategory": subcategoryController.text,
-                                "rating":
-                                    double.tryParse(ratingController.text) ??
-                                        0.0,
-                                "longitude":
-                                    double.tryParse(longitudeController.text) ??
-                                        0.0,
-                                "latitude":
-                                    double.tryParse(latitudeController.text) ??
-                                        0.0,
-                                "location": location.text,
-                              };
-                              updateData(attraction["id"], updatedData);
-                              Navigator.of(context).pop();
-                            }
-                          },
-                          child: const Text('Update'),
-                        ),
-                      ],
+                      ),
+                      onPressed: () {
+                        if (formKey.currentState!.validate()) {
+                          final updatedData = {
+                            "description": controllers["description"]!.text,
+                            "image_url": controllers["image_url"]!.text,
+                            "name": controllers["name"]!.text,
+                            "subCategory": controllers["subCategory"]!.text,
+                            "rating": double.tryParse(controllers["rating"]!.text) ?? 0.0,
+                            "longitude": double.tryParse(controllers["longitude"]!.text) ?? 0.0,
+                            "latitude": double.tryParse(controllers["latitude"]!.text) ?? 0.0,
+                            "location": controllers["location"]!.text,
+                          };
+                          updateData(restaurant["id"], updatedData);
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: Text('Update', style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  // Show add product dialog
+  Widget _buildFormField(TextEditingController controller, String label, {bool isNumber = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          filled: true,
+          fillColor: Colors.grey.shade50,
+        ),
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        validator: (value) => value!.isEmpty ? 'Required' : null,
+      ),
+    );
+  }
+
   void showAddProductDialog() {
     final formKey = GlobalKey<FormState>();
-    final TextEditingController descriptionController = TextEditingController();
-    final TextEditingController imageurlController = TextEditingController();
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController subcategoryController = TextEditingController();
-    final TextEditingController ratingController = TextEditingController();
-    final TextEditingController longitudeController = TextEditingController();
-    final TextEditingController latitudeController = TextEditingController();
-    final TextEditingController locationController = TextEditingController();
+    final controllers = {
+      "description": TextEditingController(),
+      "image_url": TextEditingController(),
+      "name": TextEditingController(),
+      "subCategory": TextEditingController(),
+      "rating": TextEditingController(),
+      "longitude": TextEditingController(),
+      "latitude": TextEditingController(),
+      "location": TextEditingController(),
+    };
 
     showDialog(
       context: context,
-      builder: (context) {
-        return Dialog(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom +
-                    20, // Adjust for keyboard
-                left: 20,
-                right: 20,
-                top: 20,
-              ),
-              child: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Add New Restaurant',
+                     style: TextStyle(
+                       fontSize: 22,
+                       fontWeight: FontWeight.bold,
+                       color: Colors.orange.shade800,
+                     )),
+                SizedBox(height: 20),
+                _buildFormField(controllers["description"]!, 'Description'),
+                _buildFormField(controllers["image_url"]!, 'Image URL'),
+                _buildFormField(controllers["name"]!, 'Restaurant Name'),
+                _buildFormField(controllers["subCategory"]!, 'Cuisine Type'),
+                _buildFormField(controllers["rating"]!, 'Rating', isNumber: true),
+                _buildFormField(controllers["longitude"]!, 'Longitude', isNumber: true),
+                _buildFormField(controllers["latitude"]!, 'Latitude', isNumber: true),
+                _buildFormField(controllers["location"]!, 'Location'),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    TextFormField(
-                        controller: descriptionController,
-                        decoration: const InputDecoration(labelText: 'Description'),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null),
-                    TextFormField(
-                        controller: imageurlController,
-                        decoration: const InputDecoration(labelText: 'Image URL'),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null),
-                    TextFormField(
-                        controller: nameController,
-                        decoration:
-                            const InputDecoration(labelText: 'Attraction Name'),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null),
-                    TextFormField(
-                        controller: subcategoryController,
-                        decoration: const InputDecoration(labelText: 'SubCategory'),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null),
-                    TextFormField(
-                        controller: ratingController,
-                        decoration: const InputDecoration(labelText: 'Rating'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null),
-                    TextFormField(
-                        controller: longitudeController,
-                        decoration: const InputDecoration(labelText: 'Longitude'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null),
-                    TextFormField(
-                        controller: latitudeController,
-                        decoration: const InputDecoration(labelText: 'Latitude'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null),
-                    TextFormField(
-                        controller: locationController,
-                        decoration: const InputDecoration(labelText: 'Location'),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Cancel'),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600)),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade800,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (formKey.currentState!.validate()) {
-                              final newProduct = {
-                                "description": descriptionController.text,
-                                "image_url": imageurlController.text,
-                                "name": nameController.text,
-                                "subCategory": subcategoryController.text,
-                                "rating":
-                                    double.tryParse(ratingController.text) ??
-                                        0.0,
-                                "longitude":
-                                    double.tryParse(longitudeController.text) ??
-                                        0.0,
-                                "latitude":
-                                    double.tryParse(latitudeController.text) ??
-                                        0.0,
-                                "location": locationController.text
-                              };
-                              FirebaseFirestore.instance
-                                  .collection('Restaurants')
-                                  .add(newProduct)
-                                  .then((_) {
-                                fetchData(); // Refresh the list after adding the new product
-                                Navigator.of(context).pop();
-                              });
-                            }
-                          },
-                          child: const Text('Add Attraction'),
-                        ),
-                      ],
+                      ),
+                      onPressed: () {
+                        if (formKey.currentState!.validate()) {
+                          final newProduct = {
+                            "description": controllers["description"]!.text,
+                            "image_url": controllers["image_url"]!.text,
+                            "name": controllers["name"]!.text,
+                            "subCategory": controllers["subCategory"]!.text,
+                            "rating": double.tryParse(controllers["rating"]!.text) ?? 0.0,
+                            "longitude": double.tryParse(controllers["longitude"]!.text) ?? 0.0,
+                            "latitude": double.tryParse(controllers["latitude"]!.text) ?? 0.0,
+                            "location": controllers["location"]!.text,
+                          };
+                          FirebaseFirestore.instance.collection('Restaurants').add(newProduct).then((_) {
+                            fetchData();
+                            Navigator.of(context).pop();
+                          });
+                        }
+                      },
+                      child: Text('Add Restaurant', style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  // Search products
   void searchProducts(String query) {
-    final results = _products.where((product) {
-      final name = product['name'].toLowerCase();
-      return name.contains(query.toLowerCase());
-    }).toList();
-
     setState(() {
-      _filteredProducts = results;
+      _filteredProducts = _products.where((product) {
+        final name = product['name'].toString().toLowerCase();
+        final description = product['description'].toString().toLowerCase();
+        return name.contains(query.toLowerCase()) || 
+               description.contains(query.toLowerCase());
+      }).toList();
     });
   }
 
-  // Sort products by price or name
   void sortProducts(String criterion) {
     setState(() {
-      if (criterion == 'Rating') {
-        _filteredProducts.sort((a, b) {
-          double ratingA = double.tryParse(a['rating'].toString()) ?? 0.0;
-          double ratingB = double.tryParse(b['rating'].toString()) ?? 0.0;
-          return ratingB.compareTo(ratingA); // Sort descending
-        });
-      } else if (criterion == 'Name') {
-        _filteredProducts.sort((a, b) => a['name'].compareTo(b['name']));
-      }
+      _sortCriteria = criterion;
+      _filteredProducts.sort(_sortByCriteria);
     });
   }
 
@@ -365,141 +331,212 @@ class _RestaurantsState extends State<Restaurants> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Restaurants Data',
-            style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
-        backgroundColor: Colors.deepPurple,
+        title: Text('Restaurants',
+               style: TextStyle(
+                 color: Colors.white,
+                 fontWeight: FontWeight.bold,
+                 fontSize: 20,
+               )),
+          backgroundColor: Colors.indigo,
+        iconTheme: IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: showAddProductDialog, // Show the Add Product Dialog
+            icon: Icon(Icons.add, size: 28),
+            onPressed: showAddProductDialog,
           ),
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Colors.orange.shade800,
+                strokeWidth: 3,
+              ),
+            )
           : Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    controller: searchController,
-                    decoration: const InputDecoration(
-                      labelText: 'Search Restaurants',
-                      labelStyle: TextStyle(color: Colors.black),
-                      prefixIcon: Icon(Icons.search, color: Colors.black),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
-                    style: const TextStyle(color: Colors.black),
-                    onChanged: (value) {
-                      setState(() {
-                        if (value.isEmpty) {
-                          _filteredProducts =
-                              _products; // Reset to all products when search query is empty
-                        } else {
-                          searchProducts(
-                              value); // Filter the list based on the search query
-                        }
-                      });
-                    },
+                    child: TextField(
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search restaurants...',
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
+                        prefixIcon: Icon(Icons.search, color: Colors.orange.shade800),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                      ),
+                      onChanged: searchProducts,
+                    ),
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
-                      onPressed: () => sortProducts('Rating'),
-                      style: TextButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-                        foregroundColor:
-                            Colors.white, // Set text color to white
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text('Sort by Rating'),
-                    ),
-                    const SizedBox(width: 10), // Space between buttons
-                    TextButton(
-                      onPressed: () => sortProducts('Name'),
-                      style: TextButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-                        foregroundColor:
-                            Colors.white, // Set text color to white
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text('Sort by Name'),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildSortButton('Rating', Icons.star),
+                      _buildSortButton('Name', Icons.sort_by_alpha),
+                    ],
+                  ),
                 ),
+                SizedBox(height: 8),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: _filteredProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = _filteredProducts[index];
-                      return Card(
-                        margin: const EdgeInsets.all(10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        elevation: 5,
-                        child: Padding(
-                          padding: const EdgeInsets.all(15.0),
+                  child: _filteredProducts.isEmpty
+                      ? Center(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                "Name: ${product["name"]}",
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              Text("Description: ${product["description"]}",
-                                  style: const TextStyle(color: Colors.black)),
-                              Text("SubCategory: ${product["subCategory"]}",
-                                  style: const TextStyle(color: Colors.black)),
-                              Text("Rating: ${product["rating"]}",
-                                  style: const TextStyle(color: Colors.black)),
-                              product["image_url"] != null
-                                  ? Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 10),
-                                      child: CircleAvatar(
-                                        radius: 40,
-                                        backgroundImage: NetworkImage(
-                                            product["image_url"] ?? ""),
-                                      ),
-                                    )
-                                  : const SizedBox.shrink(),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () => showEditDialog(product),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    onPressed: () =>
-                                        deleteDialog(product["id"]),
-                                  ),
-                                ],
-                              ),
+                              Icon(Icons.search_off, size: 60, color: Colors.grey.shade400),
+                              Text('No restaurants found',
+                                   style: TextStyle(
+                                     color: Colors.grey.shade600,
+                                     fontSize: 16,
+                                   )),
                             ],
                           ),
+                        )
+                      : ListView.builder(
+                          padding: EdgeInsets.only(bottom: 16),
+                          itemCount: _filteredProducts.length,
+                          itemBuilder: (context, index) {
+                            final restaurant = _filteredProducts[index];
+                            return _buildRestaurantCard(restaurant);
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: showAddProductDialog,
+        backgroundColor: Colors.orange.shade800,
+        child: Icon(Icons.add, color: Colors.white),
+        elevation: 4,
+      ),
+    );
+  }
+
+  Widget _buildSortButton(String label, IconData icon) {
+    return OutlinedButton.icon(
+      icon: Icon(icon, size: 16, color: _sortCriteria == label ? Colors.orange.shade800 : Colors.grey),
+      label: Text(label, style: TextStyle(color: _sortCriteria == label ? Colors.orange.shade800 : Colors.grey)),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: _sortCriteria == label ? Colors.orange.shade800 : Colors.grey.shade300),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      ),
+      onPressed: () => sortProducts(label),
+    );
+  }
+
+  Widget _buildRestaurantCard(Map<String, dynamic> restaurant) {
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => showEditDialog(restaurant),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (restaurant["image_url"] != null && restaurant["image_url"].toString().isNotEmpty)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        restaurant["image_url"],
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 100,
+                          height: 100,
+                          color: Colors.grey.shade200,
+                          child: Icon(Icons.restaurant, color: Colors.grey.shade400),
+                        ),
+                      ),
+                    ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          restaurant["name"] ?? 'No Name',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange.shade800,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          restaurant["subCategory"] ?? 'No Cuisine Type',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        RatingBarIndicator(
+                          rating: double.tryParse(restaurant["rating"].toString()) ?? 0.0,
+                          itemBuilder: (context, index) => Icon(
+                            Icons.star,
+                            color: Colors.amber,
+                          ),
+                          itemCount: 5,
+                          itemSize: 20,
+                          direction: Axis.horizontal,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              Text(
+                restaurant["description"] ?? 'No description available',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Colors.grey.shade700),
+              ),
+              SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit, color: Colors.orange.shade800),
+                    onPressed: () => showEditDialog(restaurant),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => deleteDialog(restaurant["id"]),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

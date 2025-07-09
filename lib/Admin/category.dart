@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-class CategoriesScreen extends StatefulWidget {
-  const CategoriesScreen({super.key});
+class CategoryAdminPanel extends StatefulWidget {
+  const CategoryAdminPanel({super.key});
 
   @override
-  State<CategoriesScreen> createState() => _CategoriesScreenState();
+  State<CategoryAdminPanel> createState() => _CategoryAdminPanelState();
 }
 
-class _CategoriesScreenState extends State<CategoriesScreen> {
+class _CategoryAdminPanelState extends State<CategoryAdminPanel> {
   List<Map<String, dynamic>> _categories = [];
   bool _isLoading = true;
 
@@ -24,7 +24,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       final snapshot = await FirebaseFirestore.instance.collection('categories').get();
       final categories = snapshot.docs.map((doc) {
         final data = doc.data();
-        data['id'] = doc.id; // Store document ID
+        data['id'] = doc.id;
         return data;
       }).toList();
 
@@ -33,7 +33,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print("Error fetching categories: $e");
+      _showErrorSnackbar('Failed to load categories: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -41,38 +41,58 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Future<void> _updateCategory(String docId, Map<String, dynamic> newData) async {
     try {
       await FirebaseFirestore.instance.collection('categories').doc(docId).update(newData);
+      _showSuccessSnackbar('Category updated successfully');
       _fetchCategories();
     } catch (e) {
-      print("Error updating category: $e");
+      _showErrorSnackbar('Error updating category: $e');
     }
   }
 
   Future<void> _deleteCategory(String docId) async {
     try {
       await FirebaseFirestore.instance.collection('categories').doc(docId).delete();
+      _showSuccessSnackbar('Category deleted successfully');
       _fetchCategories();
     } catch (e) {
-      print("Error deleting category: $e");
+      _showErrorSnackbar('Error deleting category: $e');
     }
   }
 
-  void _showDeleteDialog(String docId) {
+  void _showSuccessSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(String docId, String categoryName) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Confirm Delete'),
-        content: Text('Are you sure you want to delete this category?'),
+        title: Text('Delete Category', style: TextStyle(color: Colors.red)),
+        content: Text('Are you sure you want to delete "$categoryName"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('CANCEL', style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
               _deleteCategory(docId);
-              Navigator.pop(context);
+              Navigator.of(context).pop();
             },
-            child: Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text('DELETE', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -80,140 +100,264 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   void _showEditDialog(Map<String, dynamic> category) {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController(text: category['category'] ?? '');
-    final imageController = TextEditingController(text: category['cat_img'] ?? '');
+    final TextEditingController nameController = TextEditingController(text: category["category"]);
+    final TextEditingController imageController = TextEditingController(text: category["cat_img"]);
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Edit Category', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                SizedBox(height: 20),
-                TextFormField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Category Name',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
-                ),
-                SizedBox(height: 16),
-                TextFormField(
-                  controller: imageController,
-                  decoration: InputDecoration(
-                    labelText: 'Image URL',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
-                ),
-                SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () {
-                        if (formKey.currentState!.validate()) {
-                          _updateCategory(category['id'], {
-                            'category': nameController.text,
-                            'cat_img': imageController.text,
-                          });
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: Text('Update'),
-                    ),
-                  ],
+                Text('Edit Category', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
-          ),
+            Divider(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildTextField(
+                      controller: nameController,
+                      label: 'Category Name',
+                      icon: Icons.category,
+                    ),
+                    SizedBox(height: 20),
+                    _buildTextField(
+                      controller: imageController,
+                      label: 'Image URL',
+                      icon: Icons.image,
+                    ),
+                    SizedBox(height: 30),
+                    if (imageController.text.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Image.network(
+                          imageController.text,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 180,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 180,
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                                  Text('Invalid Image URL', style: TextStyle(color: Colors.grey)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange,
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (nameController.text.isEmpty) {
+                        _showErrorSnackbar('Category name is required');
+                        return;
+                      }
+
+                      _updateCategory(category['id'], {
+                        "cat_img": imageController.text,
+                        "category": nameController.text,
+                      });
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('SAVE CHANGES', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _showAddDialog() {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController();
-    final imageController = TextEditingController();
+  void _showAddCategoryDialog() {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController imageController = TextEditingController();
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Add New Category', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                SizedBox(height: 20),
-                TextFormField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Category Name',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
-                ),
-                SizedBox(height: 16),
-                TextFormField(
-                  controller: imageController,
-                  decoration: InputDecoration(
-                    labelText: 'Image URL',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
-                ),
-                SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () {
-                        if (formKey.currentState!.validate()) {
-                          FirebaseFirestore.instance.collection('categories').add({
-                            'category': nameController.text,
-                            'cat_img': imageController.text,
-                          }).then((_) {
-                            _fetchCategories();
-                            Navigator.pop(context);
-                          });
-                        }
-                      },
-                      child: Text('Add'),
-                    ),
-                  ],
+                Text('Add New Category', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
-          ),
+            Divider(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildTextField(
+                      controller: nameController,
+                      label: 'Category Name',
+                      icon: Icons.category,
+                    ),
+                    SizedBox(height: 20),
+                    _buildTextField(
+                      controller: imageController,
+                      label: 'Image URL',
+                      icon: Icons.image,
+                    ),
+                    SizedBox(height: 30),
+                    if (imageController.text.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Image.network(
+                          imageController.text,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 180,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 180,
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                                  Text('Invalid Image URL', style: TextStyle(color: Colors.grey)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange,
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (nameController.text.isEmpty) {
+                        _showErrorSnackbar('Category name is required');
+                        return;
+                      }
+
+                      FirebaseFirestore.instance.collection('categories').add({
+                        "cat_img": imageController.text,
+                        "category": nameController.text,
+                      });
+                      Navigator.of(context).pop();
+                      _fetchCategories();
+                    },
+                    child: Text('ADD CATEGORY', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.deepOrange),
+        prefixIcon: Icon(icon, color: Colors.deepOrange),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.deepOrange),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.deepOrange, width: 2),
         ),
       ),
     );
@@ -222,113 +366,124 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.deepOrange,
+          statusBarIconBrightness: Brightness.light,
+        ),
         title: Text('Categories', style: TextStyle(color: Colors.white)),
         centerTitle: true,
+        backgroundColor: Colors.indigo,
+        elevation: 0,
         actions: [
           IconButton(
             icon: Icon(Icons.add, color: Colors.white),
-            onPressed: _showAddDialog,
+            onPressed: _showAddCategoryDialog,
             tooltip: 'Add Category',
           ),
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: Colors.deepOrange))
           : _categories.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(FontAwesomeIcons.folderOpen, size: 48, color: Colors.grey),
+                      Icon(Icons.category, size: 60, color: Colors.grey),
                       SizedBox(height: 16),
-                      Text('No categories found', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                      SizedBox(height: 8),
-                      TextButton(
-                        onPressed: _showAddDialog,
-                        child: Text('Add your first category'),
+                      Text('No categories found', style: TextStyle(color: Colors.grey)),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepOrange,
+                        ),
+                        onPressed: _showAddCategoryDialog,
+                        child: Text('Add First Category', style: TextStyle(color: Colors.white)),
                       ),
                     ],
                   ),
                 )
-              : GridView.builder(
+              : ListView.builder(
                   padding: EdgeInsets.all(16),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.8,
-                  ),
                   itemCount: _categories.length,
                   itemBuilder: (context, index) {
                     final category = _categories[index];
                     return Card(
-                      elevation: 4,
+                      margin: EdgeInsets.only(bottom: 16),
+                      elevation: 2,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                      child: Stack(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(15),
+                        onTap: () => _showEditDialog(category),
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Row(
                             children: [
+                              if (category["cat_img"] != null && category["cat_img"].isNotEmpty)
+                                Container(
+                                  width: 70,
+                                  height: 70,
+                                  margin: EdgeInsets.only(right: 16),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    image: DecorationImage(
+                                      image: NetworkImage(category["cat_img"]),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
                               Expanded(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                                  child: (category['cat_img'] != null && (category['cat_img'] as String).isNotEmpty)
-                                      ? Image.network(
-                                          category['cat_img'],
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) =>
-                                              Container(
-                                                color: Colors.grey[200],
-                                                child: Center(child: Icon(Icons.broken_image)),
-                                              ),
-                                        )
-                                      : Container(
-                                          color: Colors.grey[200],
-                                          child: Center(child: Icon(Icons.image, size: 48, color: Colors.grey)),
-                                        ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      category["category"],
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8),
+                                    if (category["cat_img"] != null && category["cat_img"].isNotEmpty)
+                                      Text(
+                                        'Image URL: ${category["cat_img"].length > 30 ? '${category["cat_img"].substring(0, 30)}...' : category["cat_img"]}',
+                                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                                      ),
+                                  ],
                                 ),
                               ),
-                              Padding(
-                                padding: EdgeInsets.all(12),
-                                child: Text(
-                                  category['category'] ?? 'Unnamed Category',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                              PopupMenuButton(
+                                icon: Icon(Icons.more_vert),
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    child: ListTile(
+                                      leading: Icon(Icons.edit, color: Colors.deepOrange),
+                                      title: Text('Edit'),
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        _showEditDialog(category);
+                                      },
+                                    ),
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.9),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(Icons.edit, size: 20),
-                                    onPressed: () => _showEditDialog(category),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.delete, size: 20, color: Colors.red),
-                                    onPressed: () => _showDeleteDialog(category['id']),
+                                  PopupMenuItem(
+                                    child: ListTile(
+                                      leading: Icon(Icons.delete, color: Colors.red),
+                                      title: Text('Delete'),
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        _showDeleteConfirmation(category['id'], category['category']);
+                                      },
+                                    ),
                                   ),
                                 ],
                               ),
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     );
                   },

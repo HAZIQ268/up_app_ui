@@ -289,7 +289,7 @@ class _HotelsScreenState extends State<HotelsScreen> {
       appBar: AppBar(
         title: Text('Hotels Management', style: TextStyle(color: Colors.white)),
         centerTitle: true,
-        backgroundColor: Colors.blue[800],
+         backgroundColor: Colors.indigo,
         actions: [
           IconButton(
             icon: Icon(Icons.add, color: Colors.white),
