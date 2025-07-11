@@ -12,13 +12,14 @@ class DatabaseService {
 
   // Register User and Store Data in Firestore
   Future<String?> createUser(
-      String name, String email, String phone, String password) async {
+    String name,
+    String email,
+    String phone,
+    String password,
+  ) async {
     try {
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'name': name,
@@ -37,13 +38,10 @@ class DatabaseService {
   // Login User
   Future<String?> loginUser(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
       return "Login Successfully";
     } catch (e) {
+      print("Login error: ${e.toString()}");
       return "Login Failed: ${e.toString()}";
     }
   }
@@ -89,10 +87,17 @@ class DatabaseService {
 
   // Add New Category
   Future<void> addCategory(
-      String title, File imageFile, String color1, String color2) async {
+    String title,
+    File imageFile,
+    String color1,
+    String color2,
+  ) async {
     try {
-      String imageUrl =
-          await _uploadImage(imageFile, "categories_images", title);
+      String imageUrl = await _uploadImage(
+        imageFile,
+        "categories_images",
+        title,
+      );
 
       await _firestore.collection('categories').add({
         'title': title,
@@ -117,7 +122,7 @@ class DatabaseService {
       "Attractions",
       "Hotels",
       "Events",
-      "Restaurants"
+      "Restaurants",
     ];
     List<Map<String, dynamic>> allListings = [];
 
@@ -140,11 +145,15 @@ class DatabaseService {
         }
 
         QuerySnapshot snapshot = await query.get();
-        allListings.addAll(snapshot.docs.map((doc) => {
-              'documentId': doc.id, 
-              'collection': cat, 
-              ...doc.data() as Map<String, dynamic>
-            }));
+        allListings.addAll(
+          snapshot.docs.map(
+            (doc) => {
+              'documentId': doc.id,
+              'collection': cat,
+              ...doc.data() as Map<String, dynamic>,
+            },
+          ),
+        );
       }
     } else {
       // Fetch from a single category collection
@@ -164,13 +173,17 @@ class DatabaseService {
       }
 
       QuerySnapshot snapshot = await query.get();
-      allListings = snapshot.docs
-          .map((doc) => {
-                'documentId': doc.id, // ✅ Ensure document ID is correctly named
-                'collection': category, // ✅ Store the collection name
-                ...doc.data() as Map<String, dynamic>
-              })
-          .toList();
+      allListings =
+          snapshot.docs
+              .map(
+                (doc) => {
+                  'documentId':
+                      doc.id, // ✅ Ensure document ID is correctly named
+                  'collection': category, // ✅ Store the collection name
+                  ...doc.data() as Map<String, dynamic>,
+                },
+              )
+              .toList();
     }
 
     return allListings;
@@ -180,12 +193,15 @@ class DatabaseService {
 
   // Upload Image to Firebase Storage (Reusable)
   Future<String> _uploadImage(
-      File imageFile, String folder, String title) async {
+    File imageFile,
+    String folder,
+    String title,
+  ) async {
     Reference ref = _storage.ref().child('$folder/$title.jpg');
     UploadTask uploadTask = ref.putFile(imageFile);
     TaskSnapshot snapshot = await uploadTask;
     return await snapshot.ref.getDownloadURL();
   }
 
-// ==================//
+  // ==================//
 }

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:flutter/animation.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class Detail extends StatefulWidget {
   final Map<String, dynamic> listing;
@@ -21,67 +23,29 @@ class Detail extends StatefulWidget {
   State<Detail> createState() => _DetailState();
 }
 
-class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _slideAnimation;
+class _DetailState extends State<Detail> {
   bool _isLiked = false;
   bool _showFullDescription = false;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
-    
-    _slideAnimation = Tween<double>(begin: 50.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOut,
-      ),
-    );
-    
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      _animationController.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
 
   void _openMapPopup() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.background,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(30),
+      builder:
+          (context) => Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.background,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
+            ),
+            child: LocationMapPopup(
+              latitude: widget.listing['latitude'] ?? 0.0,
+              longitude: widget.listing['longitude'] ?? 0.0,
+              locationName: widget.listing['name'] ?? 'Location',
             ),
           ),
-          child: LocationMapPopup(
-            latitude: widget.listing['latitude'],
-            longitude: widget.listing['longitude'],
-          ),
-        );
-      },
     );
   }
 
@@ -90,297 +54,270 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.background,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(30),
+      builder:
+          (context) => Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.background,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
+            ),
+            child: ReviewsPopup(
+              collection: widget.collection,
+              documentId: widget.documentId,
+              listingName: widget.listing['name'] ?? 'Place',
             ),
           ),
-          child: ReviewsPopup(
-            collection: widget.collection,
-            documentId: widget.documentId,
-            listingName: widget.listing['name'] ?? "Unknown Place",
-          ),
-        );
-      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      body: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          return Stack(
-            children: [
-              // Hero Image
-              Hero(
-                tag: '${widget.collection}-${widget.documentId}',
-                child: Container(
-                  height: 350,
+      body: Stack(
+        children: [
+          /// HERO IMAGE
+          Hero(
+            tag: '${widget.collection}-${widget.documentId}',
+            child: CachedNetworkImage(
+              imageUrl: widget.listing['image_url'] ?? '',
+              height: 400,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              placeholder:
+                  (c, _) => Container(
+                    color: colors.surfaceVariant,
+                    child: Center(
+                      child: CircularProgressIndicator(color: colors.primary),
+                    ),
+                  ),
+              errorWidget:
+                  (c, _, __) => Container(
+                    color: colors.surfaceVariant,
+                    child: const Icon(Icons.image_not_supported),
+                  ),
+            ),
+          ),
+
+          /// BACK BUTTON
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 16,
+            child: FloatingActionButton.small(
+              heroTag: 'backButton',
+              backgroundColor: colors.surface.withOpacity(.8),
+              foregroundColor: colors.onSurface,
+              onPressed: () => Navigator.pop(context),
+              child: const Icon(Icons.arrow_back),
+            ),
+          ),
+
+          /// LIKE BUTTON
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            right: 16,
+            child: FloatingActionButton.small(
+              heroTag: 'likeButton',
+              backgroundColor: colors.surface.withOpacity(.8),
+              foregroundColor: _isLiked ? Colors.red : colors.onSurface,
+              onPressed: () {
+                setState(() => _isLiked = !_isLiked);
+                HapticFeedback.lightImpact();
+              },
+              child: Icon(_isLiked ? Icons.favorite : Icons.favorite_border),
+            ),
+          ),
+
+          /// SLIDING SHEET
+          DraggableScrollableSheet(
+            initialChildSize: .6,
+            minChildSize: .5,
+            maxChildSize: .9,
+            builder:
+                (context, controller) => Container(
                   decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(widget.listing['image_url'] ?? ''),
-                      fit: BoxFit.cover,
+                    color: colors.background,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(30),
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(.2),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
                   ),
-                ),
-              ),
-
-              // Back Button
-              Positioned(
-                top: MediaQuery.of(context).padding.top + 10,
-                left: 10,
-                child: IconButton(
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.arrow_back, color: Colors.white),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-
-              // Like Button
-              Positioned(
-                top: MediaQuery.of(context).padding.top + 10,
-                right: 10,
-                child: IconButton(
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      _isLiked ? Icons.favorite : Icons.favorite_border,
-                      color: _isLiked ? Colors.red : Colors.white,
-                    ),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isLiked = !_isLiked;
-                    });
-                    // Add haptic feedback
-                    HapticFeedback.lightImpact();
-                  },
-                ),
-              ),
-
-              // Content
-              Transform.translate(
-                offset: Offset(0, _slideAnimation.value),
-                child: Opacity(
-                  opacity: _fadeAnimation.value,
-                  child: DraggableScrollableSheet(
-                    initialChildSize: 0.6,
-                    minChildSize: 0.6,
-                    maxChildSize: 0.9,
-                    builder: (context, scrollController) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.background,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(30),
+                  child: ListView(
+                    controller: controller,
+                    padding: const EdgeInsets.all(24),
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: colors.onSurface.withOpacity(.2),
+                            borderRadius: BorderRadius.circular(5),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 20,
-                              spreadRadius: 5,
-                            ),
-                          ],
                         ),
-                        child: SingleChildScrollView(
-                          controller: scrollController,
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Drag Handle
-                                Center(
-                                  child: Container(
-                                    width: 40,
-                                    height: 5,
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.onSurface.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
+                      ),
+                      const SizedBox(height: 24),
 
-                                // Title
-                                Text(
-                                  widget.listing['name'] ?? "Unknown Place",
-                                  style: textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                      /// TITLE + RATING
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.listing['name'] ?? 'Place',
+                              style: textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: _showReviewsPopup,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.primary.withOpacity(.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.star,
+                                    color: colors.primary,
+                                    size: 20,
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-
-                                // Location
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.location_on,
-                                      size: 20,
-                                      color: colorScheme.primary,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      widget.listing['location'] ??
-                                          "Location not available",
-                                      style: textTheme.bodyMedium,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-
-                                // Rating and Reviews
-                                GestureDetector(
-                                  onTap: _showReviewsPopup,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.surfaceVariant,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.star,
-                                          color: Colors.amber,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          double.tryParse(widget.listing['rating']
-                                                  .toString())
-                                              ?.toStringAsFixed(1) ??
-                                              '0.0',
-                                          style: textTheme.bodyMedium,
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Text(
-                                          "View Reviews",
-                                          style: textTheme.bodyMedium?.copyWith(
-                                            color: colorScheme.primary,
-                                            decoration: TextDecoration.underline,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-
-                                // Description
-                                Text(
-                                  "Description",
-                                  style: textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _showFullDescription =
-                                          !_showFullDescription;
-                                    });
-                                  },
-                                  child: Text(
-                                    widget.listing['description'] ??
-                                        "No description available.",
-                                    style: textTheme.bodyLarge,
-                                    maxLines: _showFullDescription ? null : 3,
-                                    overflow: _showFullDescription
-                                        ? null
-                                        : TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (!_showFullDescription &&
-                                    (widget.listing['description'] ?? '')
-                                        .length > 100)
+                                  const SizedBox(width: 4),
                                   Text(
-                                    "Tap to read more",
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.primary,
+                                    (widget.listing['rating'] as num?)
+                                            ?.toStringAsFixed(1) ??
+                                        '0.0',
+                                    style: textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.primary,
                                     ),
                                   ),
-                                const SizedBox(height: 30),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
 
-                                // Map Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    onPressed: _openMapPopup,
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      backgroundColor: colorScheme.primary,
-                                      foregroundColor: colorScheme.onPrimary,
-                                      elevation: 5,
-                                      shadowColor: colorScheme.primary
-                                          .withOpacity(0.3),
-                                    ),
-                                    icon: const Icon(Icons.map),
-                                    label: const Text("View on Map"),
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                              ],
+                      /// LOCATION
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: colors.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.listing['location'] ??
+                                'Location not available',
+                            style: textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      /// DESCRIPTION
+                      Text(
+                        'About',
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap:
+                            () => setState(
+                              () =>
+                                  _showFullDescription = !_showFullDescription,
+                            ),
+                        child: Text(
+                          widget.listing['description'] ??
+                              'No description available.',
+                          maxLines: _showFullDescription ? null : 3,
+                          overflow:
+                              _showFullDescription
+                                  ? null
+                                  : TextOverflow.ellipsis,
+                          style: textTheme.bodyLarge,
+                        ),
+                      ),
+                      if (!_showFullDescription &&
+                          (widget.listing['description'] ?? '').length > 100)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Read more',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colors.primary,
                             ),
                           ),
                         ),
-                      );
-                    },
+                      const SizedBox(height: 32),
+
+                      /// MAP BUTTON
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _openMapPopup,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            backgroundColor: colors.primary,
+                            foregroundColor: colors.onPrimary,
+                          ),
+                          icon: const Icon(Icons.map),
+                          label: const Text('View on Map'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 }
 
+/*───────────────────────────────────────────────────────────*/
 class LocationMapPopup extends StatelessWidget {
   final double latitude;
   final double longitude;
+  final String locationName;
 
   const LocationMapPopup({
     Key? key,
     required this.latitude,
     required this.longitude,
+    required this.locationName,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.9,
+      height: MediaQuery.of(context).size.height * .9,
       child: Column(
         children: [
           Padding(
@@ -389,8 +326,10 @@ class LocationMapPopup extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Location",
-                  style: Theme.of(context).textTheme.titleLarge,
+                  locationName,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -400,30 +339,39 @@ class LocationMapPopup extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: FlutterMap(
-              options: MapOptions(
-                center: LatLng(latitude, longitude),
-                zoom: 15.0,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
               ),
-              children: [
-                TileLayer(
-                  urlTemplate:
-                      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  subdomains: ['a', 'b', 'c'],
+              child: FlutterMap(
+                options: MapOptions(
+                  center: LatLng(latitude, longitude),
+                  zoom: 15,
                 ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: LatLng(latitude, longitude),
-                      builder: (ctx) => const Icon(
-                        Icons.location_pin,
-                        color: Colors.red,
-                        size: 40,
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: ['a', 'b', 'c'],
+                    userAgentPackageName: 'com.example.city_guide_app',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: LatLng(latitude, longitude),
+                        width: 50,
+                        height: 50,
+                        builder:
+                            (_) => Icon(
+                              Icons.location_pin,
+                              color: colors.primary,
+                              size: 50,
+                            ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -432,7 +380,8 @@ class LocationMapPopup extends StatelessWidget {
   }
 }
 
-class ReviewsPopup extends StatelessWidget {
+/*───────────────────────────────────────────────────────────*/
+class ReviewsPopup extends StatefulWidget {
   final String collection;
   final String documentId;
   final String listingName;
@@ -445,9 +394,184 @@ class ReviewsPopup extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<ReviewsPopup> createState() => _ReviewsPopupState();
+}
+
+class _ReviewsPopupState extends State<ReviewsPopup> {
+  final TextEditingController _controller = TextEditingController();
+  double _rating = 0;
+  bool _showForm = false;
+  String? _editingDocId; // null => add mode
+  List<Map<String, dynamic>> _reviews = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _listenReviews();
+  }
+
+  void _listenReviews() {
+    FirebaseFirestore.instance
+        .collection(widget.collection)
+        .doc(widget.documentId)
+        .collection('reviews')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .listen((snap) {
+          setState(() {
+            _reviews =
+                snap.docs.map((d) {
+                  final data = d.data();
+                  return {
+                    'docId': d.id,
+                    'userId': data['userId'] ?? '',
+                    'username': data['username'] ?? 'Anonymous',
+                    'text': data['text'] ?? '',
+                    'rating': (data['rating'] as num?)?.toDouble() ?? 0,
+                    'profileImage': data['profileImage'] ?? '',
+                    'timestamp': data['timestamp'] ?? Timestamp.now(),
+                  };
+                }).toList();
+          });
+        });
+  }
+
+  /*──────── date util ─────────*/
+  String _timeAgo(Timestamp ts) {
+    final diff = DateTime.now().difference(ts.toDate());
+    if (diff.inDays > 365) return '${(diff.inDays / 365).floor()}y ago';
+    if (diff.inDays > 30) return '${(diff.inDays / 30).floor()}mo ago';
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
+    return 'Just now';
+  }
+
+  /*──────── add / update ─────────*/
+  Future<void> _submit() async {
+    if (_controller.text.isEmpty || _rating == 0) {
+      _showSnack('Please add both rating & review', Colors.red);
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showSnack('Login required', Colors.red);
+      return;
+    }
+
+    try {
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+
+      final userData = userDoc.data() ?? {};
+
+      final data = {
+        'userId': user.uid,
+        'username': userData['name'] ?? 'Anonymous',
+        'text': _controller.text,
+        'rating': _rating,
+        'profileImage': userData['profileImage'] ?? '',
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+
+      final ref = FirebaseFirestore.instance
+          .collection(widget.collection)
+          .doc(widget.documentId)
+          .collection('reviews');
+
+      if (_editingDocId == null) {
+        await ref.add(data);
+      } else {
+        await ref.doc(_editingDocId).update(data);
+      }
+
+      await _recalcAverage();
+
+      setState(() {
+        _showForm = false;
+        _controller.clear();
+        _rating = 0;
+        _editingDocId = null;
+      });
+
+      _showSnack('Review saved successfully!', Colors.green);
+    } catch (e) {
+      _showSnack('Error saving review: ${e.toString()}', Colors.red);
+    }
+  }
+
+  /*──────── delete ─────────*/
+  Future<void> _delete(String docId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Delete review?'),
+            content: const Text('This action cannot be undone.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+    if (ok != true) return;
+
+    await FirebaseFirestore.instance
+        .collection(widget.collection)
+        .doc(widget.documentId)
+        .collection('reviews')
+        .doc(docId)
+        .delete();
+    await _recalcAverage();
+  }
+
+  /*──────── avg rating ─────────*/
+  Future<void> _recalcAverage() async {
+    final snap =
+        await FirebaseFirestore.instance
+            .collection(widget.collection)
+            .doc(widget.documentId)
+            .collection('reviews')
+            .get();
+    if (snap.docs.isEmpty) return;
+    final sum = snap.docs.fold<double>(
+      0,
+      (p, e) => p + (e['rating'] as num).toDouble(),
+    );
+    await FirebaseFirestore.instance
+        .collection(widget.collection)
+        .doc(widget.documentId)
+        .update({'rating': sum / snap.docs.length});
+  }
+
+  void _showSnack(String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  /*──────── UI ─────────*/
+  @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final txt = Theme.of(context).textTheme;
+
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.9,
+      height: MediaQuery.of(context).size.height * .9,
       child: Column(
         children: [
           Padding(
@@ -456,8 +580,8 @@ class ReviewsPopup extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Reviews for $listingName",
-                  style: Theme.of(context).textTheme.titleLarge,
+                  'Reviews for ${widget.listingName}',
+                  style: txt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -466,42 +590,193 @@ class ReviewsPopup extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: 5, // Replace with actual reviews count
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.person),
-                  ),
-                  title: const Text("User Name"),
-                  subtitle: const Text("Great place! Would visit again."),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(
-                      5,
-                      (starIndex) => Icon(
-                        Icons.star,
-                        color: starIndex < 4 ? Colors.amber : Colors.grey,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                );
-              },
+          const Divider(height: 1),
+          if (!_showForm)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => setState(() => _showForm = true),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Review'),
+                ),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              onPressed: () {
-                // Add review functionality
-              },
-              child: const Text("Add Review"),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                if (_showForm) _buildForm(colors),
+                Text(
+                  'Recent Reviews',
+                  style: txt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                if (_reviews.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32),
+                      child: Text('No reviews yet'),
+                    ),
+                  )
+                else
+                  ..._reviews.map(_buildReviewTile),
+              ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  /*──────── form widget ─────────*/
+  Widget _buildForm(ColorScheme colors) {
+    final isUpdate = _editingDocId != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isUpdate ? 'Edit Review' : 'Write a Review',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _controller,
+          maxLines: 4,
+          decoration: InputDecoration(
+            hintText: 'Share your experience...',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Your Rating:',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        RatingBar.builder(
+          initialRating: _rating,
+          minRating: 1,
+          allowHalfRating: true,
+          itemCount: 5,
+          itemBuilder: (_, __) => const Icon(Icons.star, color: Colors.amber),
+          onRatingUpdate: (r) => setState(() => _rating = r),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  setState(() {
+                    _showForm = false;
+                    _controller.clear();
+                    _rating = 0;
+                    _editingDocId = null;
+                  });
+                },
+                child: const Text('Cancel'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _submit,
+                child: Text(isUpdate ? 'Update' : 'Submit'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        const Divider(),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  /*──────── single review tile ─────────*/
+  Widget _buildReviewTile(Map<String, dynamic> r) {
+    final colors = Theme.of(context).colorScheme;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final isOwner = uid == r['userId'];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surfaceVariant,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundImage:
+                    (r['profileImage'] as String).isNotEmpty
+                        ? NetworkImage(r['profileImage'])
+                        : null,
+                child:
+                    (r['profileImage'] as String).isEmpty
+                        ? const Icon(Icons.person)
+                        : null,
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    r['username'],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    _timeAgo(r['timestamp']),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.onSurface.withOpacity(.6),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              RatingBarIndicator(
+                rating: r['rating'],
+                itemBuilder:
+                    (_, __) => const Icon(Icons.star, color: Colors.amber),
+                itemSize: 16,
+              ),
+              if (isOwner) ...[
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 18),
+                  onPressed: () {
+                    setState(() {
+                      _showForm = true;
+                      _editingDocId = r['docId'];
+                      _controller.text = r['text'];
+                      _rating = r['rating'];
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 18),
+                  onPressed: () => _delete(r['docId']),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(r['text']),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

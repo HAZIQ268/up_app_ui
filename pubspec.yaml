@@ -54,7 +54,6 @@ dependencies:
   flutter_rating_bar: ^4.0.1
   lottie: ^2.7.0
   flutter_animate: ^4.5.2
-  carousel_slider: ^5.1.1
   liquid_swipe: ^3.1.0
   smooth_page_indicator: ^1.2.1
   liquid_pull_to_refresh: ^3.0.1
@@ -63,6 +62,7 @@ dependencies:
   animated_text_kit: ^4.2.3
   flutter_svg: ^2.0.9
   google_fonts: ^4.0.4
+  glassmorphism: ^3.0.0
 
  
 

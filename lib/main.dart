@@ -4,9 +4,10 @@ import 'package:city_guide_app/Admin/Islamabad.dart';
 import 'package:city_guide_app/Admin/abbottabad.dart';
 import 'package:city_guide_app/Admin/karachi.dart';
 import 'package:city_guide_app/Admin/lahore.dart';
-import 'package:city_guide_app/Admin/login.dart';
 import 'package:city_guide_app/Admin/multan.dart';
 import 'package:city_guide_app/Admin/product.dart';
+import 'package:city_guide_app/App/Home.dart';
+import 'package:city_guide_app/App/login.dart';
 import 'package:city_guide_app/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:city_guide_app/Admin/cities.dart';
 import 'package:city_guide_app/Admin/hotels.dart';
-import 'package:city_guide_app/Admin/read_data.dart';
+import 'package:city_guide_app/Admin/user_manage.dart';
 import 'package:city_guide_app/Admin/restaurants.dart';
 import 'package:city_guide_app/Splash.dart';
 import 'package:get/get.dart';
@@ -57,6 +58,7 @@ class MyUnifiedApp extends StatelessWidget {
         '/': (context) => RoleSelectorScreen(),
         '/admin': (context) => AdminScreen(),
         '/app': (context) => Splash(),
+        '/app_home': (context) => Home(),
       },
     );
   }
@@ -81,27 +83,29 @@ class RoleSelectorScreen extends StatelessWidget {
               Positioned(
                 top: -50,
                 left: -50,
-                child: Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1),
-                  ),
-                ).animate().scale(duration: 1500.ms).fadeIn(),
+                child:
+                    Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                    ).animate().scale(duration: 1500.ms).fadeIn(),
               ),
 
               Positioned(
                 bottom: -100,
                 right: -50,
-                child: Container(
-                  width: 250,
-                  height: 250,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1),
-                  ),
-                ).animate().scale(duration: 1500.ms).fadeIn(),
+                child:
+                    Container(
+                      width: 250,
+                      height: 250,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                    ).animate().scale(duration: 1500.ms).fadeIn(),
               ),
 
               Center(
@@ -124,10 +128,10 @@ class RoleSelectorScreen extends StatelessWidget {
                           ).animate().scale(duration: 800.ms),
 
                           Icon(
-                            Icons.travel_explore,
-                            size: 80,
-                            color: Colors.white,
-                          )
+                                Icons.travel_explore,
+                                size: 80,
+                                color: Colors.white,
+                              )
                               .animate()
                               .fadeIn(duration: 500.ms)
                               .scale(delay: 200.ms)
@@ -150,14 +154,14 @@ class RoleSelectorScreen extends StatelessWidget {
                           ).animate().fadeIn().slideY(begin: -10),
 
                           Text(
-                            'City Guide',
-                            style: TextStyle(
-                              fontSize: 42,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 1.5,
-                            ),
-                          )
+                                'City Guide',
+                                style: TextStyle(
+                                  fontSize: 42,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1.5,
+                                ),
+                              )
                               .animate()
                               .fadeIn(delay: 200.ms)
                               .scaleXY(begin: 0.8)
@@ -177,11 +181,13 @@ class RoleSelectorScreen extends StatelessWidget {
                             title: "Admin Access",
                             subtitle: "Manage city content and users",
                             color: Color(0xFFFF416C),
-                            onTap: () => Navigator.pushNamed(context, '/admin'),
-                            // correct code navigator 
-                  //           Navigator.pushReplacement(
-                  // context,
-                  // MaterialPageRoute(builder: (context) => Login()),
+                            onTap:
+                                () => Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Login(),
+                                  ),
+                                ),
                           ).animate().fadeIn(delay: 400.ms).slideX(begin: -50),
 
                           SizedBox(height: 20),
@@ -304,7 +310,7 @@ class _AdminScreenState extends State<AdminScreen> {
   String adminName = "Loading...";
   String adminEmail = "Loading...";
   String adminAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-  
+
   int userCount = 0;
   int bookCount = 0;
   int categoryCount = 0;
@@ -323,18 +329,21 @@ class _AdminScreenState extends State<AdminScreen> {
   Future<void> _loadAdminData() async {
     try {
       if (_currentUser != null) {
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(_currentUser!.uid)
-            .get();
+        final userDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(_currentUser!.uid)
+                .get();
 
         if (userDoc.exists) {
           setState(() {
-            adminName = userDoc['name'] ?? _currentUser!.displayName ?? "Admin User";
+            adminName =
+                userDoc['name'] ?? _currentUser!.displayName ?? "Admin User";
             adminEmail = _currentUser!.email ?? "admin@cityguide.com";
-            adminAvatar = userDoc['profileImage'] ?? 
-                         _currentUser!.photoURL ?? 
-                         "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+            adminAvatar =
+                userDoc['profileImage'] ??
+                _currentUser!.photoURL ??
+                "https://cdn-icons-png.flaticon.com/512/149/149071.png";
           });
         }
       }
@@ -349,74 +358,78 @@ class _AdminScreenState extends State<AdminScreen> {
   void _showAdminProfile(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          padding: EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundImage: CachedNetworkImageProvider(adminAvatar),
-                backgroundColor: Colors.grey[200],
+      builder:
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
               ),
-              SizedBox(height: 16),
-              Text(
-                adminName,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                adminEmail,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              ),
-              SizedBox(height: 20),
-              Divider(height: 1, color: Colors.grey[300]),
-              SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                  );
-                },
-                icon: Icon(Icons.logout, size: 20),
-                label: Text("Logout"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red[400],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: CachedNetworkImageProvider(adminAvatar),
+                    backgroundColor: Colors.grey[200],
                   ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                  SizedBox(height: 16),
+                  Text(
+                    adminName,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
+                  SizedBox(height: 8),
+                  Text(
+                    adminEmail,
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  ),
+                  SizedBox(height: 20),
+                  Divider(height: 1, color: Colors.grey[300]),
+                  SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => Login()),
+                      );
+                    },
+                    icon: Icon(Icons.logout, size: 20),
+                    label: Text("Logout"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red[400],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 
   void fetchCounts() async {
     try {
-      final userSnapshot = await FirebaseFirestore.instance.collection('users').get();
-      final bookSnapshot = await FirebaseFirestore.instance.collection('Attractions').get();
-      final categorySnapshot = await FirebaseFirestore.instance.collection('cities').get();
+      final userSnapshot =
+          await FirebaseFirestore.instance.collection('users').get();
+      final bookSnapshot =
+          await FirebaseFirestore.instance.collection('Attractions').get();
+      final categorySnapshot =
+          await FirebaseFirestore.instance.collection('cities').get();
 
       setState(() {
         userCount = userSnapshot.docs.length;
@@ -438,7 +451,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
   Future<void> fetchCategoryCounts() async {
     try {
-      final bookSnapshot = await FirebaseFirestore.instance.collection('Attractions').get();
+      final bookSnapshot =
+          await FirebaseFirestore.instance.collection('Attractions').get();
       Map<String, int> categoryCounts = {};
 
       for (var doc in bookSnapshot.docs) {
@@ -472,9 +486,10 @@ class _AdminScreenState extends State<AdminScreen> {
             icon: CircleAvatar(
               radius: 16,
               backgroundImage: CachedNetworkImageProvider(adminAvatar),
-              child: adminAvatar.isEmpty 
-                  ? Icon(Icons.person, size: 18, color: Colors.indigo)
-                  : null,
+              child:
+                  adminAvatar.isEmpty
+                      ? Icon(Icons.person, size: 18, color: Colors.indigo)
+                      : null,
             ),
             onPressed: () => _showAdminProfile(context),
           ),
@@ -486,184 +501,193 @@ class _AdminScreenState extends State<AdminScreen> {
         adminEmail: adminEmail,
         adminAvatar: adminAvatar,
       ),
-      body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo)))
-          : errorMessage.isNotEmpty
+      body:
+          isLoading
               ? Center(
-                  child: Text(errorMessage, style: TextStyle(color: Colors.red)))
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo),
+                ),
+              )
+              : errorMessage.isNotEmpty
+              ? Center(
+                child: Text(errorMessage, style: TextStyle(color: Colors.red)),
+              )
               : SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Welcome Card with Glass Morphism Effect
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.indigo.shade600,
-                              Colors.blue.shade400
-                            ],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.blue.withOpacity(0.3),
-                              blurRadius: 20,
-                              spreadRadius: 2,
-                              offset: Offset(0, 10),
-                            ),
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Welcome Card with Glass Morphism Effect
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.indigo.shade600,
+                            Colors.blue.shade400,
                           ],
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Welcome Back, $adminName!',
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.3),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                            offset: Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome Back, $adminName!',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Manage your city guide app with powerful insights',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Manage your city guide app with powerful insights',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 16,
-                              ),
-                            ),
-                            SizedBox(height: 16),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 24),
-
-                      // Stats Overview
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(
-                          'Dashboard Overview',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.indigo,
-                            letterSpacing: 0.5,
                           ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 24),
+
+                    // Stats Overview
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        'Dashboard Overview',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.indigo,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                      SizedBox(height: 16),
+                    ),
+                    SizedBox(height: 16),
 
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.1,
+                      children: [
+                        _buildStatCard(
+                          icon: Icons.people_alt_rounded,
+                          title: 'Total Users',
+                          value: userCount.toString(),
+                          color: Colors.purpleAccent,
+                        ),
+                        _buildStatCard(
+                          icon: Icons.place_rounded,
+                          title: 'Attractions',
+                          value: bookCount.toString(),
+                          color: Colors.orangeAccent,
+                        ),
+                        _buildStatCard(
+                          icon: Icons.location_city_rounded,
+                          title: 'Cities',
+                          value: categoryCount.toString(),
+                          color: Colors.greenAccent,
+                        ),
+                        _buildStatCard(
+                          icon: Icons.category_rounded,
+                          title: 'Categories',
+                          value: categoryBookCount.length.toString(),
+                          color: Colors.blueAccent,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24),
+
+                    // Attractions by City
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Attractions by City',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.indigo,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.refresh, color: Colors.indigo),
+                            onPressed: fetchCounts,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 16),
+
+                    if (categoryBookCount.isNotEmpty)
                       GridView.count(
                         shrinkWrap: true,
                         physics: NeverScrollableScrollPhysics(),
                         crossAxisCount: 2,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        childAspectRatio: 1.1,
-                        children: [
-                          _buildStatCard(
-                            icon: Icons.people_alt_rounded,
-                            title: 'Total Users',
-                            value: userCount.toString(),
-                            color: Colors.purpleAccent,
-                          ),
-                          _buildStatCard(
-                            icon: Icons.place_rounded,
-                            title: 'Attractions',
-                            value: bookCount.toString(),
-                            color: Colors.orangeAccent,
-                          ),
-                          _buildStatCard(
-                            icon: Icons.location_city_rounded,
-                            title: 'Cities',
-                            value: categoryCount.toString(),
-                            color: Colors.greenAccent,
-                          ),
-                          _buildStatCard(
-                            icon: Icons.category_rounded,
-                            title: 'Categories',
-                            value: categoryBookCount.length.toString(),
-                            color: Colors.blueAccent,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 24),
-
-                      // Attractions by City
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Attractions by City',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.indigo,
-                                letterSpacing: 0.5,
-                              ),
+                        childAspectRatio: 1.5,
+                        children:
+                            categoryBookCount.entries.map((entry) {
+                              return _buildCityCard(
+                                cityId: entry.key,
+                                count: entry.value,
+                              );
+                            }).toList(),
+                      )
+                    else
+                      Container(
+                        height: 100,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.indigo,
                             ),
-                            IconButton(
-                              icon: Icon(Icons.refresh, color: Colors.indigo),
-                              onPressed: fetchCounts,
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                      SizedBox(height: 16),
-
-                      if (categoryBookCount.isNotEmpty)
-                        GridView.count(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 1.5,
-                          children: categoryBookCount.entries.map((entry) {
-                            return _buildCityCard(
-                              cityId: entry.key,
-                              count: entry.value,
-                            );
-                          }).toList(),
-                        )
-                      else
-                        Container(
-                          height: 100,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.indigo)),
-                          ),
-                        ),
-                    ],
-                  ),
+                  ],
                 ),
+              ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Add action
@@ -683,9 +707,7 @@ class _AdminScreenState extends State<AdminScreen> {
   }) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -709,11 +731,7 @@ class _AdminScreenState extends State<AdminScreen> {
                       color: Colors.white.withOpacity(0.9),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      icon,
-                      color: color,
-                      size: 24,
-                    ),
+                    child: Icon(icon, color: color, size: 24),
                   ),
                   Spacer(),
                   Icon(Icons.more_vert, color: Colors.grey.shade400, size: 20),
@@ -744,15 +762,10 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  Widget _buildCityCard({
-    required String cityId,
-    required int count,
-  }) {
+  Widget _buildCityCard({required String cityId, required int count}) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -775,10 +788,11 @@ class _AdminScreenState extends State<AdminScreen> {
                 SizedBox(width: 12),
                 Expanded(
                   child: FutureBuilder<DocumentSnapshot>(
-                    future: FirebaseFirestore.instance
-                        .collection('cities')
-                        .doc(cityId)
-                        .get(),
+                    future:
+                        FirebaseFirestore.instance
+                            .collection('cities')
+                            .doc(cityId)
+                            .get(),
                     builder: (context, snapshot) {
                       String cityName = "City $cityId";
                       if (snapshot.hasData && snapshot.data!.exists) {
@@ -863,10 +877,7 @@ class DashboardDrawer extends StatelessWidget {
             UserAccountsDrawerHeader(
               accountName: Text(
                 adminName,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               accountEmail: Text(adminEmail),
               currentAccountPicture: CircleAvatar(
@@ -903,7 +914,8 @@ class DashboardDrawer extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => UserManagementScreen()),
+                          builder: (context) => UserManagementScreen(),
+                        ),
                       );
                     },
                   ),
@@ -926,7 +938,8 @@ class DashboardDrawer extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CitiesAdminPanel()),
+                          builder: (context) => CitiesAdminPanel(),
+                        ),
                       );
                     },
                   ),
@@ -953,10 +966,11 @@ class DashboardDrawer extends StatelessWidget {
                     },
                   ),
                   Divider(
-                      height: 24,
-                      color: Colors.grey.shade300,
-                      indent: 16,
-                      endIndent: 16),
+                    height: 24,
+                    color: Colors.grey.shade300,
+                    indent: 16,
+                    endIndent: 16,
+                  ),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     child: Text(
@@ -1034,7 +1048,7 @@ class DashboardDrawer extends StatelessWidget {
                       await FirebaseAuth.instance.signOut();
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => LoginPage()),
+                        MaterialPageRoute(builder: (context) => Login()),
                       );
                     },
                   ),
@@ -1081,16 +1095,21 @@ class DashboardDrawer extends StatelessWidget {
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
           ),
         ),
-        trailing: isSelected
-            ? Container(
-                padding: EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.indigo,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.chevron_right, size: 14, color: Colors.white),
-              )
-            : null,
+        trailing:
+            isSelected
+                ? Container(
+                  padding: EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.chevron_right,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                )
+                : null,
         onTap: onTap,
       ),
     );

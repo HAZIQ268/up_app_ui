@@ -40,10 +40,7 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
       begin: const Offset(0, 0.5),
       end: Offset.zero,
     ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutBack,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
     );
     _animationController.forward();
   }
@@ -225,10 +222,18 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                                 Navigator.push(
                                   context,
                                   PageRouteBuilder(
-                                    pageBuilder: (context, animation, secondaryAnimation) =>
-                                        const Signup(),
-                                    transitionsBuilder:
-                                        (context, animation, secondaryAnimation, child) {
+                                    pageBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                        ) => const Signup(),
+                                    transitionsBuilder: (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                      child,
+                                    ) {
                                       return SlideTransition(
                                         position: Tween<Offset>(
                                           begin: const Offset(1, 0),
@@ -268,10 +273,7 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                           height: 60,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(15),
-                            border: Border.all(
-                              color: primaryColor,
-                              width: 2,
-                            ),
+                            border: Border.all(color: primaryColor, width: 2),
                           ),
                           child: Material(
                             color: Colors.transparent,
@@ -281,10 +283,18 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                                 Navigator.push(
                                   context,
                                   PageRouteBuilder(
-                                    pageBuilder: (context, animation, secondaryAnimation) =>
-                                        const Login(),
-                                    transitionsBuilder:
-                                        (context, animation, secondaryAnimation, child) {
+                                    pageBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                        ) => const Login(),
+                                    transitionsBuilder: (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                      child,
+                                    ) {
                                       return SlideTransition(
                                         position: Tween<Offset>(
                                           begin: const Offset(1, 0),
@@ -324,10 +334,15 @@ class _LpState extends State<Lp> with SingleTickerProviderStateMixin {
                             Navigator.pushReplacement(
                               context,
                               PageRouteBuilder(
-                                pageBuilder: (context, animation, secondaryAnimation) =>
-                                    const Home(),
-                                transitionsBuilder:
-                                    (context, animation, secondaryAnimation, child) {
+                                pageBuilder:
+                                    (context, animation, secondaryAnimation) =>
+                                        const Home(),
+                                transitionsBuilder: (
+                                  context,
+                                  animation,
+                                  secondaryAnimation,
+                                  child,
+                                ) {
                                   return FadeTransition(
                                     opacity: animation,
                                     child: child,

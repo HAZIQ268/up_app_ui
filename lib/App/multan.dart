@@ -21,26 +21,26 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: const Interval(0.0, 0.5, curve: Curves.easeInOut),
       ),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: const Interval(0.3, 0.8, curve: Curves.elasticOut),
       ),
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
@@ -48,9 +48,9 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
       CurvedAnimation(
         parent: _animationController,
         curve: const Interval(0.4, 1.0, curve: Curves.fastOutSlowIn),
-    ),
+      ),
     );
-    
+
     _colorAnimation = ColorTween(
       begin: Colors.orange[100],
       end: Colors.transparent,
@@ -60,7 +60,7 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
         curve: const Interval(0.0, 0.3, curve: Curves.easeOut),
       ),
     );
-    
+
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _animationController.forward();
     });
@@ -92,7 +92,7 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
           onError: Colors.white,
           brightness: Brightness.light,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 6,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -143,7 +143,8 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                 ),
               ),
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('multan').snapshots(),
+                stream:
+                    FirebaseFirestore.instance.collection('multan').snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return _buildLoadingState(colorScheme);
@@ -195,13 +196,19 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                             opacity: _fadeAnimation.value,
                             duration: const Duration(milliseconds: 500),
                             child: Transform.translate(
-                              offset: Offset(0, 10 * (1 - _fadeAnimation.value)),
+                              offset: Offset(
+                                0,
+                                10 * (1 - _fadeAnimation.value),
+                              ),
                               child: Text(
                                 "City of Saints",
                                 style: theme.textTheme.headlineSmall?.copyWith(
                                   color: Colors.white,
                                   shadows: const [
-                                    Shadow(blurRadius: 8, color: Colors.black45),
+                                    Shadow(
+                                      blurRadius: 8,
+                                      color: Colors.black45,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -225,29 +232,32 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
 
                       // Content Sliver with animations
                       SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            var data = attractions[index].data() as Map<String, dynamic>;
-                            
-                            return AnimatedBuilder(
-                              animation: _animationController,
-                              builder: (context, child) {
-                                return SlideTransition(
-                                  position: _slideAnimation,
-                                  child: ScaleTransition(
-                                    scale: _scaleAnimation,
-                                    child: FadeTransition(
-                                      opacity: _fadeAnimation,
-                                      child: child,
-                                    ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          var data =
+                              attractions[index].data() as Map<String, dynamic>;
+
+                          return AnimatedBuilder(
+                            animation: _animationController,
+                            builder: (context, child) {
+                              return SlideTransition(
+                                position: _slideAnimation,
+                                child: ScaleTransition(
+                                  scale: _scaleAnimation,
+                                  child: FadeTransition(
+                                    opacity: _fadeAnimation,
+                                    child: child,
                                   ),
-                                );
-                              },
-                              child: _buildAttractionCard(context, data, attractions[index].id, index),
-                            );
-                          },
-                          childCount: attractions.length,
-                        ),
+                                ),
+                              );
+                            },
+                            child: _buildAttractionCard(
+                              context,
+                              data,
+                              attractions[index].id,
+                              index,
+                            ),
+                          );
+                        }, childCount: attractions.length),
                       ),
                     ],
                   );
@@ -266,17 +276,11 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 20),
-          CircularProgressIndicator(
-            color: colorScheme.primary,
-            strokeWidth: 3,
-          ),
+          CircularProgressIndicator(color: colorScheme.primary, strokeWidth: 3),
           const SizedBox(height: 20),
           Text(
             "Discovering Multan...",
-            style: TextStyle(
-              color: colorScheme.onBackground,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: colorScheme.onBackground, fontSize: 16),
           ),
         ],
       ),
@@ -288,11 +292,7 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: colorScheme.error,
-            size: 60,
-          ),
+          Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 60),
           const SizedBox(height: 20),
           Text(
             "Oops! Something went wrong",
@@ -356,7 +356,12 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
     );
   }
 
-  Widget _buildAttractionCard(BuildContext context, Map<String, dynamic> data, String documentId, int index) {
+  Widget _buildAttractionCard(
+    BuildContext context,
+    Map<String, dynamic> data,
+    String documentId,
+    int index,
+  ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -369,24 +374,24 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
             context,
             PageRouteBuilder(
               transitionDuration: const Duration(milliseconds: 800),
-              pageBuilder: (_, __, ___) => Detail(
-                listing: data,
-                collection: 'multan',
-                documentId: documentId,
-              ),
+              pageBuilder:
+                  (_, __, ___) => Detail(
+                    listing: data,
+                    collection: 'multan',
+                    documentId: documentId,
+                  ),
               transitionsBuilder: (_, animation, __, child) {
                 return SlideTransition(
                   position: Tween<Offset>(
                     begin: const Offset(0, 0.1),
                     end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.fastOutSlowIn,
-                  )),
-                  child: FadeTransition(
-                    opacity: animation,
-                    child: child,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.fastOutSlowIn,
+                    ),
                   ),
+                  child: FadeTransition(opacity: animation, child: child),
                 );
               },
             ),
@@ -404,7 +409,7 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
               Hero(
                 tag: 'attraction-${data['name']}',
                 child: AspectRatio(
-                  aspectRatio: 16/9,
+                  aspectRatio: 16 / 9,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -415,24 +420,26 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                           if (loadingProgress == null) return child;
                           return Center(
                             child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
+                              value:
+                                  loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
                               color: colorScheme.primary,
                             ),
                           );
                         },
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: colorScheme.surfaceVariant,
-                          child: Center(
-                            child: Icon(
-                              Icons.image_not_supported_rounded,
-                              size: 50,
-                              color: colorScheme.onSurfaceVariant,
+                        errorBuilder:
+                            (context, error, stackTrace) => Container(
+                              color: colorScheme.surfaceVariant,
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_not_supported_rounded,
+                                  size: 50,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
                       ),
                       DecoratedBox(
                         decoration: BoxDecoration(
@@ -450,7 +457,7 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                   ),
                 ),
               ),
-              
+
               // Content
               Positioned(
                 left: 0,
@@ -491,9 +498,9 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                           );
                         },
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // Location with animated icon
                       Row(
                         children: [
@@ -503,10 +510,7 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                             builder: (context, value, child) {
                               return Transform.translate(
                                 offset: Offset(20 * (1 - value), 0),
-                                child: Opacity(
-                                  opacity: value,
-                                  child: child,
-                                ),
+                                child: Opacity(opacity: value, child: child),
                               );
                             },
                             child: Icon(
@@ -528,9 +532,9 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 12),
-                      
+
                       // Rating and CTA with staggered animation
                       Row(
                         children: [
@@ -545,7 +549,10 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                               );
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.amber[700],
                                 borderRadius: BorderRadius.circular(12),
@@ -560,7 +567,10 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    double.tryParse(data['rating'].toString())?.toStringAsFixed(1) ?? '0.0',
+                                    double.tryParse(
+                                          data['rating'].toString(),
+                                        )?.toStringAsFixed(1) ??
+                                        '0.0',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -570,9 +580,9 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                               ),
                             ),
                           ),
-                          
+
                           const Spacer(),
-                          
+
                           TweenAnimationBuilder(
                             duration: const Duration(milliseconds: 800),
                             tween: Tween<double>(begin: 0, end: 1),
@@ -580,18 +590,20 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                             builder: (context, value, child) {
                               return Transform.translate(
                                 offset: Offset(20 * (1 - value), 0),
-                                child: Opacity(
-                                  opacity: value,
-                                  child: child,
-                                ),
+                                child: Opacity(opacity: value, child: child),
                               );
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.white.withOpacity(0.4)),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.4),
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -619,7 +631,7 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                   ),
                 ),
               ),
-              
+
               // Floating favorite button
               Positioned(
                 top: 16,
@@ -629,10 +641,7 @@ class _MultanState extends State<Multan> with SingleTickerProviderStateMixin {
                   tween: Tween<double>(begin: 0, end: 1),
                   curve: Curves.elasticOut,
                   builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: value,
-                      child: child,
-                    );
+                    return Transform.scale(scale: value, child: child);
                   },
                   child: FloatingActionButton.small(
                     heroTag: 'fav-$index',

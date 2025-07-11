@@ -11,7 +11,8 @@ class IslamabadPage extends StatefulWidget {
   State<IslamabadPage> createState() => _IslamabadPageState();
 }
 
-class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProviderStateMixin {
+class _IslamabadPageState extends State<IslamabadPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -21,26 +22,26 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: const Interval(0.0, 0.6, curve: Curves.easeInOut),
-    ),
+      ),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
-    ),
+      ),
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.15),
       end: Offset.zero,
@@ -50,7 +51,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
         curve: const Interval(0.3, 1.0, curve: Curves.fastOutSlowIn),
       ),
     );
-    
+
     _colorAnimation = ColorTween(
       begin: Colors.purple[100],
       end: Colors.transparent,
@@ -60,7 +61,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
         curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
       ),
     );
-    
+
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _animationController.forward();
     });
@@ -92,7 +93,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
           onError: Colors.white,
           brightness: Brightness.light,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 6,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
@@ -100,6 +101,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
           ),
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         ),
+
         appBarTheme: AppBarTheme(
           backgroundColor: const Color(0xFF8A2BE2),
           elevation: 0,
@@ -143,7 +145,10 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                 ),
               ),
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('Islamabad').snapshots(),
+                stream:
+                    FirebaseFirestore.instance
+                        .collection('Islamabad')
+                        .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return _buildLoadingState(colorScheme);
@@ -195,14 +200,20 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                             opacity: _fadeAnimation.value,
                             duration: const Duration(milliseconds: 500),
                             child: Transform.translate(
-                              offset: Offset(0, 15 * (1 - _fadeAnimation.value)),
+                              offset: Offset(
+                                0,
+                                15 * (1 - _fadeAnimation.value),
+                              ),
                               child: Text(
                                 "Islamabad Wonders",
                                 style: theme.textTheme.headlineSmall?.copyWith(
                                   color: Colors.white,
                                   fontSize: 28,
                                   shadows: const [
-                                    Shadow(blurRadius: 10, color: Colors.black54),
+                                    Shadow(
+                                      blurRadius: 10,
+                                      color: Colors.black54,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -228,29 +239,36 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                       SliverPadding(
                         padding: const EdgeInsets.only(top: 20),
                         sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              var data = attractions[index].data() as Map<String, dynamic>;
-                              
-                              return AnimatedBuilder(
-                                animation: _animationController,
-                                builder: (context, child) {
-                                  return SlideTransition(
-                                    position: _slideAnimation,
-                                    child: ScaleTransition(
-                                      scale: _scaleAnimation,
-                                      child: FadeTransition(
-                                        opacity: _fadeAnimation,
-                                        child: child,
-                                      ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            var data =
+                                attractions[index].data()
+                                    as Map<String, dynamic>;
+
+                            return AnimatedBuilder(
+                              animation: _animationController,
+                              builder: (context, child) {
+                                return SlideTransition(
+                                  position: _slideAnimation,
+                                  child: ScaleTransition(
+                                    scale: _scaleAnimation,
+                                    child: FadeTransition(
+                                      opacity: _fadeAnimation,
+                                      child: child,
                                     ),
-                                  );
-                                },
-                                child: _buildAttractionCard(context, data, attractions[index].id, index),
-                              );
-                            },
-                            childCount: attractions.length,
-                          ),
+                                  ),
+                                );
+                              },
+                              child: _buildAttractionCard(
+                                context,
+                                data,
+                                attractions[index].id,
+                                index,
+                              ),
+                            );
+                          }, childCount: attractions.length),
                         ),
                       ),
                     ],
@@ -270,17 +288,11 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 20),
-          CircularProgressIndicator(
-            color: colorScheme.primary,
-            strokeWidth: 4,
-          ),
+          CircularProgressIndicator(color: colorScheme.primary, strokeWidth: 4),
           const SizedBox(height: 20),
           Text(
             "Discovering Islamabad...",
-            style: TextStyle(
-              color: colorScheme.onBackground,
-              fontSize: 18,
-            ),
+            style: TextStyle(color: colorScheme.onBackground, fontSize: 18),
           ),
         ],
       ),
@@ -292,11 +304,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: colorScheme.error,
-            size: 70,
-          ),
+          Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 70),
           const SizedBox(height: 20),
           Text(
             "Failed to load data",
@@ -323,10 +331,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
             onPressed: () => setState(() {}),
             child: Text(
               "Retry",
-              style: TextStyle(
-                color: colorScheme.onPrimary,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: colorScheme.onPrimary, fontSize: 16),
             ),
           ),
         ],
@@ -363,7 +368,12 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
     );
   }
 
-  Widget _buildAttractionCard(BuildContext context, Map<String, dynamic> data, String documentId, int index) {
+  Widget _buildAttractionCard(
+    BuildContext context,
+    Map<String, dynamic> data,
+    String documentId,
+    int index,
+  ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final rating = double.tryParse(data['rating'].toString()) ?? 0.0;
@@ -377,24 +387,24 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
             context,
             PageRouteBuilder(
               transitionDuration: const Duration(milliseconds: 900),
-              pageBuilder: (_, __, ___) => Detail(
-                listing: data,
-                collection: 'Islamabad',
-                documentId: documentId,
-              ),
+              pageBuilder:
+                  (_, __, ___) => Detail(
+                    listing: data,
+                    collection: 'Islamabad',
+                    documentId: documentId,
+                  ),
               transitionsBuilder: (_, animation, __, child) {
                 return SlideTransition(
                   position: Tween<Offset>(
                     begin: const Offset(0, 0.15),
                     end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.fastOutSlowIn,
-                  )),
-                  child: FadeTransition(
-                    opacity: animation,
-                    child: child,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.fastOutSlowIn,
+                    ),
                   ),
+                  child: FadeTransition(opacity: animation, child: child),
                 );
               },
             ),
@@ -412,7 +422,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
               Hero(
                 tag: 'attraction-${data['name']}',
                 child: AspectRatio(
-                  aspectRatio: 16/9,
+                  aspectRatio: 16 / 9,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -423,24 +433,26 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                           if (loadingProgress == null) return child;
                           return Center(
                             child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
+                              value:
+                                  loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
                               color: colorScheme.primary,
                             ),
                           );
                         },
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: colorScheme.surfaceVariant,
-                          child: Center(
-                            child: Icon(
-                              Icons.image_not_supported_rounded,
-                              size: 60,
-                              color: colorScheme.onSurfaceVariant,
+                        errorBuilder:
+                            (context, error, stackTrace) => Container(
+                              color: colorScheme.surfaceVariant,
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_not_supported_rounded,
+                                  size: 60,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
                       ),
                       DecoratedBox(
                         decoration: BoxDecoration(
@@ -458,7 +470,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                   ),
                 ),
               ),
-              
+
               // Content
               Positioned(
                 left: 0,
@@ -500,9 +512,9 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                           );
                         },
                       ),
-                      
+
                       const SizedBox(height: 10),
-                      
+
                       // Location with animated icon
                       Row(
                         children: [
@@ -512,10 +524,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                             builder: (context, value, child) {
                               return Transform.translate(
                                 offset: Offset(25 * (1 - value), 0),
-                                child: Opacity(
-                                  opacity: value,
-                                  child: child,
-                                ),
+                                child: Opacity(opacity: value, child: child),
                               );
                             },
                             child: Icon(
@@ -538,9 +547,9 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 15),
-                      
+
                       // Rating and CTA with staggered animation
                       Row(
                         children: [
@@ -555,7 +564,10 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                               );
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.amber[700],
                                 borderRadius: BorderRadius.circular(16),
@@ -581,9 +593,9 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                               ),
                             ),
                           ),
-                          
+
                           const Spacer(),
-                          
+
                           TweenAnimationBuilder(
                             duration: const Duration(milliseconds: 900),
                             tween: Tween<double>(begin: 0, end: 1),
@@ -591,18 +603,21 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                             builder: (context, value, child) {
                               return Transform.translate(
                                 offset: Offset(25 * (1 - value), 0),
-                                child: Opacity(
-                                  opacity: value,
-                                  child: child,
-                                ),
+                                child: Opacity(opacity: value, child: child),
                               );
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.25),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.5),
+                                  width: 1.5,
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -631,7 +646,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                   ),
                 ),
               ),
-              
+
               // Floating favorite button
               Positioned(
                 top: 20,
@@ -641,10 +656,7 @@ class _IslamabadPageState extends State<IslamabadPage> with SingleTickerProvider
                   tween: Tween<double>(begin: 0, end: 1),
                   curve: Curves.elasticOut,
                   builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: value,
-                      child: child,
-                    );
+                    return Transform.scale(scale: value, child: child);
                   },
                   child: FloatingActionButton.small(
                     heroTag: 'fav-$index',
