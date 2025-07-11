@@ -177,7 +177,7 @@ class _IslamabadPageState extends State<IslamabadPage>
                               Hero(
                                 tag: 'islamabad-hero',
                                 child: Image.asset(
-                                  "../assets/images/Faisal Mosqueisla.jpg",
+                                  "../assets/images/FaisalMosque.jpg",
                                   fit: BoxFit.cover,
                                 ),
                               ),

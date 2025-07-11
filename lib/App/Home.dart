@@ -244,7 +244,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       right: 0,
                       bottom: 0,
                       child: Image.asset(
-                        '../assets/images/banner_img_icon',
+                        '../assets/images/banner_img_icon.png',
                         width: 120,
                         height: 120,
                         color: Colors.white.withOpacity(0.2),

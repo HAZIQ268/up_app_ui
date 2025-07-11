@@ -171,7 +171,7 @@ class _LahorePageState extends State<LahorePage>
                               Hero(
                                 tag: 'lahore-hero',
                                 child: Image.asset(
-                                  "../assets/images/Tomb.JPG",
+                                  "../assets/images/Lahore-Expo-Centre.jpg",
                                   fit: BoxFit.cover,
                                 ),
                               ),
