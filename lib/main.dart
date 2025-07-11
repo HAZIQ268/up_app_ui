@@ -50,8 +50,8 @@ class MyUnifiedApp extends StatelessWidget {
           centerTitle: true,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(15)),
-          ),
         ),
+      ),
       ),
       initialRoute: '/',
       routes: {
@@ -79,42 +79,36 @@ class RoleSelectorScreen extends StatelessWidget {
         child: SafeArea(
           child: Stack(
             children: [
-              // Animated background elements
               Positioned(
                 top: -50,
                 left: -50,
-                child:
-                    Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.1),
-                      ),
-                    ).animate().scale(duration: 1500.ms).fadeIn(),
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                ).animate().scale(duration: 1500.ms).fadeIn(),
               ),
-
               Positioned(
                 bottom: -100,
                 right: -50,
-                child:
-                    Container(
-                      width: 250,
-                      height: 250,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.1),
-                      ),
-                    ).animate().scale(duration: 1500.ms).fadeIn(),
+                child: Container(
+                  width: 250,
+                  height: 250,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                ).animate().scale(duration: 1500.ms).fadeIn(),
               ),
-
               Center(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.all(24),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Animated Logo
                       Stack(
                         alignment: Alignment.center,
                         children: [
@@ -126,22 +120,14 @@ class RoleSelectorScreen extends StatelessWidget {
                               color: Colors.white.withOpacity(0.2),
                             ),
                           ).animate().scale(duration: 800.ms),
-
-                          Icon(
-                                Icons.travel_explore,
-                                size: 80,
-                                color: Colors.white,
-                              )
+                          Icon(Icons.travel_explore, size: 80, color: Colors.white)
                               .animate()
                               .fadeIn(duration: 500.ms)
                               .scale(delay: 200.ms)
                               .shake(delay: 800.ms),
                         ],
                       ),
-
                       SizedBox(height: 30),
-
-                      // Title with animation
                       Column(
                         children: [
                           Text(
@@ -152,47 +138,38 @@ class RoleSelectorScreen extends StatelessWidget {
                               color: Colors.white,
                             ),
                           ).animate().fadeIn().slideY(begin: -10),
-
                           Text(
-                                'City Guide',
-                                style: TextStyle(
-                                  fontSize: 42,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 1.5,
-                                ),
-                              )
+                            'City Guide',
+                            style: TextStyle(
+                              fontSize: 42,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1.5,
+                            ),
+                          )
                               .animate()
                               .fadeIn(delay: 200.ms)
                               .scaleXY(begin: 0.8)
                               .slideY(begin: 10),
                         ],
                       ),
-
                       SizedBox(height: 50),
-
-                      // Role selection cards
                       Column(
                         children: [
-                          // Admin Card
                           _buildRoleCard(
                             context,
                             icon: Icons.admin_panel_settings,
                             title: "Admin Access",
                             subtitle: "Manage city content and users",
                             color: Color(0xFFFF416C),
-                            onTap:
-                                () => Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => Login(),
-                                  ),
-                                ),
+                            onTap: () => Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Login(),
+                              ),
+                            ),
                           ).animate().fadeIn(delay: 400.ms).slideX(begin: -50),
-
                           SizedBox(height: 20),
-
-                          // User Card
                           _buildRoleCard(
                             context,
                             icon: Icons.explore,
@@ -203,10 +180,7 @@ class RoleSelectorScreen extends StatelessWidget {
                           ).animate().fadeIn(delay: 600.ms).slideX(begin: 50),
                         ],
                       ),
-
                       SizedBox(height: 30),
-
-                      // Footer text
                       Text(
                         'Select your role to continue',
                         style: TextStyle(
@@ -259,9 +233,7 @@ class RoleSelectorScreen extends StatelessWidget {
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               child: Icon(icon, color: Colors.white, size: 24),
             ),
-
             SizedBox(width: 20),
-
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,9 +246,7 @@ class RoleSelectorScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   SizedBox(height: 5),
-
                   Text(
                     subtitle,
                     style: TextStyle(
@@ -287,7 +257,6 @@ class RoleSelectorScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             Icon(
               Icons.arrow_forward_ios,
               color: Colors.white.withOpacity(0.6),
@@ -296,6 +265,152 @@ class RoleSelectorScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class NotificationModal extends StatelessWidget {
+  final int newUsers;
+  final int newAttractions;
+  final int newCities;
+  final int newCategories;
+  final int newReviews;
+
+  const NotificationModal({
+    Key? key,
+    required this.newUsers,
+    required this.newAttractions,
+    required this.newCities,
+    required this.newCategories,
+    required this.newReviews,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Notifications',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            SizedBox(height: 10),
+            Divider(),
+            SizedBox(height: 10),
+            _buildNotificationItem(
+              icon: Icons.person_add,
+              title: 'New Users',
+              count: newUsers,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => UserManagementScreen()),
+                );
+              },
+            ),
+            _buildNotificationItem(
+              icon: Icons.place,
+              title: 'New Attractions',
+              count: newAttractions,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Attractions()),
+                );
+              },
+            ),
+            _buildNotificationItem(
+              icon: Icons.location_city,
+              title: 'New Cities',
+              count: newCities,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CitiesAdminPanel()),
+                );
+              },
+            ),
+            _buildNotificationItem(
+              icon: Icons.category,
+              title: 'New Categories',
+              count: newCategories,
+              onTap: () {
+                Navigator.pop(context);
+                // Add navigation to categories screen here
+              },
+            ),
+            _buildNotificationItem(
+              icon: Icons.reviews,
+              title: 'New Reviews',
+              count: newReviews,
+              onTap: () {
+                Navigator.pop(context);
+                // Add navigation to reviews screen here
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationItem({
+    required IconData icon,
+    required String title,
+    required int count,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.indigo.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: Colors.indigo),
+      ),
+      title: Text(title, style: TextStyle(fontFamily: 'Poppins')),
+      trailing: count > 0 
+          ? Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                count.toString(),
+                style: TextStyle(color: Colors.white),
+              ),
+            )
+          : null,
+      onTap: onTap,
     );
   }
 }
@@ -318,6 +433,13 @@ class _AdminScreenState extends State<AdminScreen> {
   bool isLoading = true;
   String errorMessage = '';
 
+  // Notification counts
+  int newUsers = 0;
+  int newAttractions = 0;
+  int newCities = 0;
+  int newCategories = 0;
+  int newReviews = 0;
+
   @override
   void initState() {
     super.initState();
@@ -329,18 +451,16 @@ class _AdminScreenState extends State<AdminScreen> {
   Future<void> _loadAdminData() async {
     try {
       if (_currentUser != null) {
-        final userDoc =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(_currentUser!.uid)
-                .get();
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .get();
 
         if (userDoc.exists) {
           setState(() {
             adminName = userDoc['name'] ?? _currentUser!.displayName ?? "Admin";
             adminEmail = _currentUser!.email ?? "admin@gmail.com";
-            adminAvatar =
-                userDoc['profileImage'] ??
+            adminAvatar = userDoc['profileImage'] ??
                 _currentUser!.photoURL ??
                 "https://cdn-icons-png.flaticon.com/512/149/149071.png";
           });
@@ -357,102 +477,99 @@ class _AdminScreenState extends State<AdminScreen> {
   void _showAdminProfile(BuildContext context) {
     showDialog(
       context: context,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25),
-            ),
-            child: Container(
-              padding: EdgeInsets.all(25),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(25),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
                 children: [
-                  Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 60,
-                        backgroundImage: CachedNetworkImageProvider(
-                          adminAvatar,
-                        ),
-                        backgroundColor: Colors.grey[200],
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.indigo,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: Icon(
-                            Icons.edit,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ],
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundImage: CachedNetworkImageProvider(adminAvatar),
+                    backgroundColor: Colors.grey[200],
                   ),
-                  SizedBox(height: 20),
-                  Text(
-                    adminName,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    adminEmail,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                  SizedBox(height: 25),
-                  Divider(height: 1, color: Colors.grey[300]),
-                  SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        await FirebaseAuth.instance.signOut();
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => Login()),
-                        );
-                      },
-                      icon: Icon(Icons.logout, size: 20),
-                      label: Text(
-                        "Logout",
-                        style: TextStyle(fontFamily: 'Poppins'),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[400],
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 15,
-                        ),
+                      child: Icon(
+                        Icons.edit,
+                        color: Colors.white,
+                        size: 18,
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
+              SizedBox(height: 20),
+              Text(
+                adminName,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                adminEmail,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(height: 25),
+              Divider(height: 1, color: Colors.grey[300]),
+              SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => Login()),
+                    );
+                  },
+                  icon: Icon(Icons.logout, size: 20),
+                  label: Text(
+                    "Logout",
+                    style: TextStyle(fontFamily: 'Poppins'),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[400],
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 15,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -469,6 +586,44 @@ class _AdminScreenState extends State<AdminScreen> {
         userCount = userSnapshot.docs.length;
         bookCount = bookSnapshot.docs.length;
         categoryCount = categorySnapshot.docs.length;
+      });
+
+      // Fetch new items (last 24 hours)
+      final now = DateTime.now();
+      final yesterday = now.subtract(Duration(days: 1));
+
+      final newUserQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('createdAt', isGreaterThan: yesterday)
+          .get();
+
+      final newAttractionQuery = await FirebaseFirestore.instance
+          .collection('Attractions')
+          .where('createdAt', isGreaterThan: yesterday)
+          .get();
+
+      final newCityQuery = await FirebaseFirestore.instance
+          .collection('cities')
+          .where('createdAt', isGreaterThan: yesterday)
+          .get();
+
+      // Similarly for categories and reviews (you'll need to implement these)
+      final newCategoryQuery = await FirebaseFirestore.instance
+          .collection('categories')
+          .where('createdAt', isGreaterThan: yesterday)
+          .get();
+
+      final newReviewQuery = await FirebaseFirestore.instance
+          .collection('reviews')
+          .where('createdAt', isGreaterThan: yesterday)
+          .get();
+
+      setState(() {
+        newUsers = newUserQuery.docs.length;
+        newAttractions = newAttractionQuery.docs.length;
+        newCities = newCityQuery.docs.length;
+        newCategories = newCategoryQuery.docs.length;
+        newReviews = newReviewQuery.docs.length;
       });
 
       await fetchCategoryCounts();
@@ -514,211 +669,217 @@ class _AdminScreenState extends State<AdminScreen> {
         actions: [
           IconButton(
             icon: Badge(
+              label: Text((newUsers + newAttractions + newCities + newCategories + newReviews).toString()),
               smallSize: 8,
               backgroundColor: Colors.red,
               child: Icon(Icons.notifications, color: Colors.indigo, size: 26),
             ),
-            onPressed: () {},
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => NotificationModal(
+                  newUsers: newUsers,
+                  newAttractions: newAttractions,
+                  newCities: newCities,
+                  newCategories: newCategories,
+                  newReviews: newReviews,
+                ),
+              );
+            },
           ),
           IconButton(
             icon: CircleAvatar(
               radius: 18,
               backgroundImage: CachedNetworkImageProvider(adminAvatar),
-              child:
-                  adminAvatar.isEmpty
-                      ? Icon(Icons.person, size: 18, color: Colors.indigo)
-                      : null,
+              child: adminAvatar.isEmpty
+                  ? Icon(Icons.person, size: 18, color: Colors.indigo)
+                  : null,
             ),
             onPressed: () => _showAdminProfile(context),
           ),
           SizedBox(width: 10),
         ],
       ),
-
       drawer: DashboardDrawer(
         adminName: adminName,
         adminEmail: adminEmail,
         adminAvatar: adminAvatar,
       ),
-      body:
-          isLoading
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo),
+              ),
+            )
+          : errorMessage.isNotEmpty
               ? Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo),
-                ),
-              )
-              : errorMessage.isNotEmpty
-              ? Center(
-                child: Text(
-                  errorMessage,
-                  style: TextStyle(color: Colors.red, fontFamily: 'Poppins'),
-                ),
-              )
+                  child: Text(
+                    errorMessage,
+                    style: TextStyle(color: Colors.red, fontFamily: 'Poppins'),
+                  ),
+                )
               : SingleChildScrollView(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Welcome Card
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(25),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.indigo.shade700,
-                            Colors.blue.shade500,
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.withOpacity(0.3),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                            offset: Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Welcome Back,',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.9),
-                                        fontSize: 18,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Text(
-                                      adminName,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w800,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.waving_hand,
-                                  color: Colors.white,
-                                ),
-                              ),
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Welcome Card
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(25),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.indigo.shade700,
+                              Colors.blue.shade500,
                             ],
                           ),
-                          SizedBox(height: 20),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.3),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                              offset: Offset(0, 10),
                             ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                Text(
-                                  'Today\'s Date',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: 14,
-                                    fontFamily: 'Poppins',
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Welcome Back,',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.9),
+                                          fontSize: 18,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                      SizedBox(height: 5),
+                                      Text(
+                                        adminName,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w800,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Text(
-                                  '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
-                                  style: TextStyle(
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.waving_hand,
                                     color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                               ],
                             ),
+                            SizedBox(height: 20),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Today\'s Date',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: 14,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  Text(
+                                    '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 25),
+                      // Stats Overview
+                      Text(
+                        'Dashboard Overview',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.indigo.shade800,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 15,
+                        mainAxisSpacing: 15,
+                        childAspectRatio: 1,
+                        children: [
+                          _buildStatCard(
+                            icon: Icons.people_alt_rounded,
+                            title: 'Total Users',
+                            value: userCount.toString(),
+                            color: Colors.purpleAccent,
+                            percent: 0.75,
+                          ),
+                          _buildStatCard(
+                            icon: Icons.place_rounded,
+                            title: 'Attractions',
+                            value: bookCount.toString(),
+                            color: Colors.orangeAccent,
+                            percent: 0.65,
+                          ),
+                          _buildStatCard(
+                            icon: Icons.location_city_rounded,
+                            title: 'Cities',
+                            value: categoryCount.toString(),
+                            color: Colors.greenAccent,
+                            percent: 0.45,
+                          ),
+                          _buildStatCard(
+                            icon: Icons.category_rounded,
+                            title: 'Categories',
+                            value: categoryBookCount.length.toString(),
+                            color: Colors.blueAccent,
+                            percent: 0.85,
                           ),
                         ],
                       ),
-                    ),
-                    SizedBox(height: 25),
-
-                    // Stats Overview
-                    Text(
-                      'Dashboard Overview',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.indigo.shade800,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                    SizedBox(height: 15),
-
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 15,
-                      mainAxisSpacing: 15,
-                      childAspectRatio: 1,
-                      children: [
-                        _buildStatCard(
-                          icon: Icons.people_alt_rounded,
-                          title: 'Total Users',
-                          value: userCount.toString(),
-                          color: Colors.purpleAccent,
-                          percent: 0.75,
-                        ),
-                        _buildStatCard(
-                          icon: Icons.place_rounded,
-                          title: 'Attractions',
-                          value: bookCount.toString(),
-                          color: Colors.orangeAccent,
-                          percent: 0.65,
-                        ),
-                        _buildStatCard(
-                          icon: Icons.location_city_rounded,
-                          title: 'Cities',
-                          value: categoryCount.toString(),
-                          color: Colors.greenAccent,
-                          percent: 0.45,
-                        ),
-                        _buildStatCard(
-                          icon: Icons.category_rounded,
-                          title: 'Categories',
-                          value: categoryBookCount.length.toString(),
-                          color: Colors.blueAccent,
-                          percent: 0.85,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 25),
-                  ],
+                      SizedBox(height: 25),
+                    ],
+                  ),
                 ),
-              ),
     );
   }
-  
 
   Widget _buildStatCard({
     required IconData icon,
@@ -857,11 +1018,10 @@ class _AdminScreenState extends State<AdminScreen> {
                   SizedBox(width: 12),
                   Expanded(
                     child: FutureBuilder<DocumentSnapshot>(
-                      future:
-                          FirebaseFirestore.instance
-                              .collection('cities')
-                              .doc(cityId)
-                              .get(),
+                      future: FirebaseFirestore.instance
+                          .collection('cities')
+                          .doc(cityId)
+                          .get(),
                       builder: (context, snapshot) {
                         String cityName = "City $cityId";
                         if (snapshot.hasData && snapshot.data!.exists) {
@@ -1227,23 +1387,24 @@ class DashboardDrawer extends StatelessWidget {
             fontFamily: 'Poppins',
           ),
         ),
-        trailing:
-            isSelected
-                ? Container(
-                  padding: EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.indigo,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.chevron_right,
-                    size: 14,
-                    color: Colors.white,
-                  ),
-                )
-                : null,
+        trailing: isSelected
+            ? Container(
+                padding: EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.indigo,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.chevron_right,
+                  size: 14,
+                  color: Colors.white,
+                ),
+              )
+            : null,
         onTap: onTap,
       ),
     );
   }
 }
+
+
