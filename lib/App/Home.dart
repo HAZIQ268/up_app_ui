@@ -4,8 +4,6 @@ import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-// Import your other pages here...
 import 'package:city_guide_app/App/Abbotabad.dart';
 import 'package:city_guide_app/App/Islamabad.dart';
 import 'package:city_guide_app/App/Karachi.dart';
