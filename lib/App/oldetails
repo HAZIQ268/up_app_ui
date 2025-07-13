@@ -71,15 +71,6 @@ class _DetailState extends State<Detail> {
     );
   }
 
-  LinearGradient get _primaryGradient => LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [
-      const Color(0xFF6A11CB).withOpacity(0.8),
-      const Color(0xFF2575FC).withOpacity(0.8),
-    ],
-  );
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -100,11 +91,7 @@ class _DetailState extends State<Detail> {
                   (c, _) => Container(
                     color: colors.surfaceVariant,
                     child: Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _primaryGradient.colors.first,
-                        ),
-                      ),
+                      child: CircularProgressIndicator(color: colors.primary),
                     ),
                   ),
               errorWidget:
@@ -201,14 +188,14 @@ class _DetailState extends State<Detail> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                gradient: _primaryGradient,
+                                color: colors.primary.withOpacity(.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.star,
-                                    color: Colors.white,
+                                    color: colors.primary,
                                     size: 20,
                                   ),
                                   const SizedBox(width: 4),
@@ -218,7 +205,7 @@ class _DetailState extends State<Detail> {
                                         '0.0',
                                     style: textTheme.bodyLarge?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: colors.primary,
                                     ),
                                   ),
                                 ],
@@ -234,7 +221,7 @@ class _DetailState extends State<Detail> {
                         children: [
                           Icon(
                             Icons.location_on,
-                            color: _primaryGradient.colors.first,
+                            color: colors.primary,
                             size: 20,
                           ),
                           const SizedBox(width: 8),
@@ -279,31 +266,13 @@ class _DetailState extends State<Detail> {
                           child: Text(
                             'Read more',
                             style: textTheme.bodySmall?.copyWith(
-                              color: _primaryGradient.colors.first,
+                              color: colors.primary,
                             ),
                           ),
                         ),
                       const SizedBox(height: 32),
 
-                      /// SHOW REVIEWS BUTTON
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _showReviewsPopup,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            backgroundColor: colors.surfaceVariant,
-                            foregroundColor: colors.onSurfaceVariant,
-                          ),
-                          child: const Text('Show Reviews'),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      /// VIEW ON MAP BUTTON
+                      /// MAP BUTTON
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -313,15 +282,8 @@ class _DetailState extends State<Detail> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            foregroundColor: Colors.white,
-                          ).copyWith(
-                            backgroundColor:
-                                MaterialStateProperty.resolveWith<Color>(
-                                  (states) =>
-                                      states.contains(MaterialState.pressed)
-                                          ? _primaryGradient.colors.last
-                                          : _primaryGradient.colors.first,
-                                ),
+                            backgroundColor: colors.primary,
+                            foregroundColor: colors.onPrimary,
                           ),
                           icon: const Icon(Icons.map),
                           label: const Text('View on Map'),
@@ -352,14 +314,7 @@ class LocationMapPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gradient = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        const Color(0xFF6A11CB).withOpacity(0.8),
-        const Color(0xFF2575FC).withOpacity(0.8),
-      ],
-    );
+    final colors = Theme.of(context).colorScheme;
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * .9,
@@ -409,7 +364,7 @@ class LocationMapPopup extends StatelessWidget {
                         builder:
                             (_) => Icon(
                               Icons.location_pin,
-                              color: gradient.colors.first,
+                              color: colors.primary,
                               size: 50,
                             ),
                       ),
@@ -448,15 +403,6 @@ class _ReviewsPopupState extends State<ReviewsPopup> {
   bool _showForm = false;
   String? _editingDocId; // null => add mode
   List<Map<String, dynamic>> _reviews = [];
-
-  final _primaryGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [
-      const Color(0xFF6A11CB).withOpacity(0.8),
-      const Color(0xFF2575FC).withOpacity(0.8),
-    ],
-  );
 
   @override
   void initState() {
@@ -572,10 +518,6 @@ class _ReviewsPopupState extends State<ReviewsPopup> {
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _primaryGradient.colors.first,
-                  foregroundColor: Colors.white,
-                ),
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text('Delete'),
               ),
@@ -632,26 +574,17 @@ class _ReviewsPopupState extends State<ReviewsPopup> {
       height: MediaQuery.of(context).size.height * .9,
       child: Column(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: _primaryGradient,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(30),
-              ),
-            ),
+          Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Reviews for ${widget.listingName}',
-                  style: txt.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: txt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
+                  icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -663,23 +596,10 @@ class _ReviewsPopupState extends State<ReviewsPopup> {
               padding: const EdgeInsets.all(16),
               child: SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    foregroundColor: Colors.white,
-                  ).copyWith(
-                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                      (states) =>
-                          states.contains(MaterialState.pressed)
-                              ? _primaryGradient.colors.last
-                              : _primaryGradient.colors.first,
-                    ),
-                  ),
+                child: ElevatedButton.icon(
                   onPressed: () => setState(() => _showForm = true),
-                  child: const Text('Add Review'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Review'),
                 ),
               ),
             ),
@@ -762,10 +682,6 @@ class _ReviewsPopupState extends State<ReviewsPopup> {
             const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: _primaryGradient.colors.first,
-                ),
                 onPressed: _submit,
                 child: Text(isUpdate ? 'Update' : 'Submit'),
               ),

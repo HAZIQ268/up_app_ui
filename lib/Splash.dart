@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:city_guide_app/App/Lp.dart';
+import 'package:city_guide_app/App/landing_page.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});
@@ -29,14 +29,18 @@ class _SplashState extends State<Splash> {
     if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => Lp()), // Navigate when data is ready
+        MaterialPageRoute(
+          builder: (context) => Lp(),
+        ), // Navigate when data is ready
       );
     }
   }
 
   Future<void> fetchData() async {
     // Simulating actual data fetching (e.g., API call, database query)
-    await Future.delayed(Duration(seconds: 6)); // Example: Data takes 6 sec to load
+    await Future.delayed(
+      Duration(seconds: 6),
+    ); // Example: Data takes 6 sec to load
     setState(() {
       _isLoading = false; // Mark data as loaded
     });
@@ -60,27 +64,29 @@ class _SplashState extends State<Splash> {
               Positioned(
                 top: -50,
                 left: -50,
-                child: Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1),
-                  ),
-                ).animate().scale(duration: 1500.ms).fadeIn(),
+                child:
+                    Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                    ).animate().scale(duration: 1500.ms).fadeIn(),
               ),
 
               Positioned(
                 bottom: -100,
                 right: -50,
-                child: Container(
-                  width: 250,
-                  height: 250,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1),
-                  ),
-                ).animate().scale(duration: 1500.ms).fadeIn(),
+                child:
+                    Container(
+                      width: 250,
+                      height: 250,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                    ).animate().scale(duration: 1500.ms).fadeIn(),
               ),
 
               Center(
@@ -103,11 +109,13 @@ class _SplashState extends State<Splash> {
                           ).animate().scale(duration: 800.ms),
 
                           Image.asset(
-                            "../assets/images/city_guide_logo_black.png",
-                            width: 120,
-                            height: 120,
-                            color: Colors.white, // Make logo white to match theme
-                          )
+                                "../assets/images/city_guide_logo_black.png",
+                                width: 120,
+                                height: 120,
+                                color:
+                                    Colors
+                                        .white, // Make logo white to match theme
+                              )
                               .animate()
                               .fadeIn(duration: 500.ms)
                               .scale(delay: 200.ms)

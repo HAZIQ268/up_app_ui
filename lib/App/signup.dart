@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:city_guide_app/database_service.dart';
 import 'package:city_guide_app/App/login.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
@@ -26,11 +29,19 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
   late Animation<Offset> _slideAnimation;
 
   // Modern color scheme
-  final Color primaryColor = Color(0xFF6C5CE7); // Vibrant purple
-  final Color secondaryColor = Color(0xFF00CEFF); // Bright cyan
-  final Color accentColor = Color(0xFFFD79A8); // Pink accent (added from LP)
-  final Color darkColor = Color(0xFF2D3436); // Dark gray
-  final Color lightColor = Color(0xFFDFE6E9); // Light gray
+  final Color primaryColor = const Color(0xFF6C5CE7); // Vibrant purple
+  final Color secondaryColor = const Color(0xFF00CEFF); // Bright cyan
+  final Color accentColor = const Color(0xFFFD79A8); // Pink accent
+  final Color darkColor = const Color(0xFF2D3436); // Dark gray
+  final Color lightColor = const Color(0xFFDFE6E9); // Light gray
+
+  // Initialize GoogleSignIn with platform detection
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    // Client ID is required for web, optional for Android/iOS
+    clientId:
+        '804538823277-9485hp4lb377rhhe1chbvkj418o5qn2j.apps.googleusercontent.com',
+    scopes: ['email'],
+  );
 
   @override
   void initState() {
@@ -64,151 +75,151 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 20,
-                  spreadRadius: 5,
-                ),
-              ],
+      builder:
+          (_) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.all(25),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child:
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.redAccent,
+                        size: 60,
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Signup Failed',
+                        style: TextStyle(
+                          fontSize: 22,
+                          color: darkColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: darkColor.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 25),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 30,
+                            vertical: 14,
+                          ),
+                        ),
+                        child: const Text(
+                          'Try Again',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  ).animate().shakeX(),
             ),
-            padding: const EdgeInsets.all(25),
-            child:
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      color: Colors.redAccent,
-                      size: 60,
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Signup Failed',
-                      style: TextStyle(
-                        fontSize: 22,
-                        color: darkColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    Text(
-                      message,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: darkColor.withOpacity(0.7),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 14,
-                        ),
-                        elevation: 3,
-                      ),
-                      child: const Text(
-                        'Try Again',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ],
-                ).animate().shakeX(),
           ),
-        );
-      },
     );
   }
 
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 20,
-                  spreadRadius: 5,
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(25),
-            child:
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.green, size: 60),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Account Created!',
-                      style: TextStyle(
-                        fontSize: 22,
-                        color: darkColor,
-                        fontWeight: FontWeight.bold,
+      builder:
+          (_) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.all(25),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child:
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 60,
                       ),
-                    ),
-                    const SizedBox(height: 15),
-                    Text(
-                      message,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: darkColor.withOpacity(0.7),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Account Created!',
+                        style: TextStyle(
+                          fontSize: 22,
+                          color: darkColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 25),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const Login(),
+                      const SizedBox(height: 15),
+                      Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: darkColor.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 25),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const Login(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 30,
+                            vertical: 14,
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 14,
+                        child: const Text(
+                          'Continue to Login',
+                          style: TextStyle(fontSize: 16),
                         ),
-                        elevation: 3,
                       ),
-                      child: const Text(
-                        'Continue to Login',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ],
-                ).animate().scale(),
+                    ],
+                  ).animate().scale(),
+            ),
           ),
-        );
-      },
     );
   }
 
@@ -232,13 +243,87 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
 
       if (result == "User registered successfully!") {
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString('userName', name);
-        prefs.setString('userEmail', email);
+        await prefs.setString('userName', name);
+        await prefs.setString('userEmail', email);
 
         _showSuccessDialog("Welcome to City Guide, $name!");
       } else {
         _showErrorDialog(result ?? 'An error occurred, please try again.');
       }
+    }
+  }
+
+  Future<void> handleGoogleSignIn() async {
+    setState(() => isLoading = true);
+    try {
+      // Step 1: Trigger Google Sign In flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        setState(() => isLoading = false);
+        return;
+      }
+
+      // Step 2: Obtain auth details
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // Step 3: Create Firebase credential
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Step 4: Sign in to Firebase
+      final UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      if (user == null) {
+        throw Exception('Google sign-in failed - no user returned');
+      }
+
+      // Step 5: Check/create user document in Firestore
+      final DocumentReference userRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
+
+      final DocumentSnapshot snap = await userRef.get();
+
+      if (!snap.exists) {
+        await userRef.set({
+          'name': user.displayName ?? 'Google User',
+          'email': user.email,
+          'phone': '',
+          'role': 'user',
+          'createdAt': FieldValue.serverTimestamp(),
+          'photoUrl': user.photoURL,
+        });
+      }
+
+      // Step 6: Get user data
+      final Map<String, dynamic> userData =
+          (await userRef.get()).data() as Map<String, dynamic>;
+      final String role = userData['role'] ?? 'user';
+
+      // Step 7: Save to local storage
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userName', userData['name'] ?? 'Google User');
+      await prefs.setString('userEmail', user.email ?? '');
+      await prefs.setString('userRole', role);
+
+      // Step 8: Show success and navigate
+      _showSuccessDialog('Account created with Google successfully!');
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(
+        context,
+        role == 'admin' ? '/admin' : '/app_home',
+      );
+    } catch (e) {
+      _showErrorDialog('Google Sign-In failed: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -261,7 +346,6 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
             child: Column(
               children: [
                 const SizedBox(height: 40),
-                // App Logo
                 SlideTransition(
                   position: _slideAnimation,
                   child: FadeTransition(
@@ -277,7 +361,7 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                           width: 2,
                         ),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.location_on,
                         size: 50,
                         color: Colors.white,
@@ -286,15 +370,14 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                   ),
                 ),
                 const SizedBox(height: 30),
-                // Welcome Text
                 SlideTransition(
                   position: _slideAnimation,
                   child: FadeTransition(
                     opacity: _fadeAnimation,
                     child: Column(
                       children: [
-                        Text(
-                          "Join City Guide",
+                        const Text(
+                          'Join City Guide',
                           style: TextStyle(
                             fontSize: 28,
                             color: Colors.white,
@@ -303,7 +386,7 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Create your account to explore the city",
+                          'Create your account to explore the city',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white.withOpacity(0.9),
@@ -314,7 +397,6 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Signup Form Card
                 SlideTransition(
                   position: _slideAnimation,
                   child: FadeTransition(
@@ -337,11 +419,10 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                         key: _formKey,
                         child: Column(
                           children: [
-                            // Name Field
                             TextFormField(
                               controller: _name,
                               decoration: InputDecoration(
-                                labelText: "Full Name",
+                                labelText: 'Full Name',
                                 prefixIcon: Icon(
                                   Icons.person,
                                   color: primaryColor,
@@ -359,18 +440,17 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return "Please enter your name";
+                                  return 'Please enter your name';
                                 }
                                 return null;
                               },
                             ).animate().slideX(delay: 200.ms),
                             const SizedBox(height: 20),
-                            // Email Field
                             TextFormField(
                               controller: _email,
                               keyboardType: TextInputType.emailAddress,
                               decoration: InputDecoration(
-                                labelText: "Email",
+                                labelText: 'Email',
                                 prefixIcon: Icon(
                                   Icons.email,
                                   color: primaryColor,
@@ -388,18 +468,17 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return "Please enter your email";
+                                  return 'Please enter your email';
                                 }
                                 if (!RegExp(
                                   r'^[^@]+@[^@]+\.[^@]+',
                                 ).hasMatch(value)) {
-                                  return "Enter a valid email";
+                                  return 'Enter a valid email';
                                 }
                                 return null;
                               },
                             ).animate().slideX(delay: 300.ms),
                             const SizedBox(height: 20),
-                            // Phone Field
                             TextFormField(
                               controller: _phone,
                               keyboardType: TextInputType.phone,
@@ -407,7 +486,7 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                                 FilteringTextInputFormatter.digitsOnly,
                               ],
                               decoration: InputDecoration(
-                                labelText: "Phone Number",
+                                labelText: 'Phone Number',
                                 prefixIcon: Icon(
                                   Icons.phone,
                                   color: primaryColor,
@@ -425,21 +504,20 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return "Please enter your phone number";
+                                  return 'Please enter your phone number';
                                 }
                                 if (value.length < 10) {
-                                  return "Phone number must be at least 10 digits";
+                                  return 'Phone number must be at least 10 digits';
                                 }
                                 return null;
                               },
                             ).animate().slideX(delay: 400.ms),
                             const SizedBox(height: 20),
-                            // Password Field
                             TextFormField(
                               controller: _password,
                               obscureText: _obscurePassword,
                               decoration: InputDecoration(
-                                labelText: "Password",
+                                labelText: 'Password',
                                 prefixIcon: Icon(
                                   Icons.lock,
                                   color: primaryColor,
@@ -470,16 +548,15 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return "Please enter your password";
+                                  return 'Please enter your password';
                                 }
                                 if (value.length < 6) {
-                                  return "Password must be at least 6 characters";
+                                  return 'Password must be at least 6 characters';
                                 }
                                 return null;
                               },
                             ).animate().slideX(delay: 500.ms),
                             const SizedBox(height: 30),
-                            // Sign Up Button with Gradient (Updated)
                             Container(
                               width: double.infinity,
                               height: 55,
@@ -494,7 +571,7 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                                   BoxShadow(
                                     color: primaryColor.withOpacity(0.3),
                                     blurRadius: 10,
-                                    offset: Offset(0, 5),
+                                    offset: const Offset(0, 5),
                                   ),
                                 ],
                               ),
@@ -510,8 +587,8 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                                               color: Colors.white,
                                               strokeWidth: 3,
                                             )
-                                            : Text(
-                                              "Sign Up",
+                                            : const Text(
+                                              'Sign Up',
                                               style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 18,
@@ -523,7 +600,6 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                               ),
                             ).animate().scale(delay: 600.ms),
                             const SizedBox(height: 30),
-                            // Divider
                             Row(
                               children: [
                                 Expanded(
@@ -537,7 +613,7 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                                     horizontal: 10,
                                   ),
                                   child: Text(
-                                    "OR",
+                                    'OR',
                                     style: TextStyle(
                                       color: Colors.grey[600],
                                       fontSize: 14,
@@ -553,28 +629,17 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                               ],
                             ).animate().fadeIn(delay: 700.ms),
                             const SizedBox(height: 25),
-                            // Social Login Buttons
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 _buildSocialButton(
                                   icon: Icons.g_mobiledata,
                                   color: const Color(0xFFDB4437),
+                                  onPressed: handleGoogleSignIn,
                                 ).animate().scale(delay: 800.ms),
-                                const SizedBox(width: 20),
-                                _buildSocialButton(
-                                  icon: Icons.facebook,
-                                  color: const Color(0xFF4267B2),
-                                ).animate().scale(delay: 900.ms),
-                                const SizedBox(width: 20),
-                                _buildSocialButton(
-                                  icon: Icons.apple,
-                                  color: Colors.black,
-                                ).animate().scale(delay: 1000.ms),
                               ],
                             ),
                             const SizedBox(height: 30),
-                            // Login Link
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -592,7 +657,7 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                                     );
                                   },
                                   child: Text(
-                                    "Login",
+                                    'Login',
                                     style: TextStyle(
                                       color: primaryColor,
                                       fontWeight: FontWeight.bold,
@@ -600,7 +665,7 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
                                   ),
                                 ),
                               ],
-                            ).animate().fadeIn(delay: 1100.ms),
+                            ).animate().fadeIn(delay: 1000.ms),
                           ],
                         ),
                       ),
@@ -616,7 +681,11 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
     );
   }
 
-  Widget _buildSocialButton({required IconData icon, required Color color}) {
+  Widget _buildSocialButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
     return Container(
       width: 55,
       height: 55,
@@ -633,7 +702,7 @@ class _SignupState extends State<Signup> with SingleTickerProviderStateMixin {
       ),
       child: IconButton(
         icon: Icon(icon, size: 30, color: color),
-        onPressed: () {},
+        onPressed: onPressed,
       ),
     );
   }

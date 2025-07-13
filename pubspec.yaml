@@ -63,7 +63,8 @@ dependencies:
   flutter_svg: ^2.0.9
   google_fonts: ^4.0.4
   glassmorphism: ^3.0.0
-  google_sign_in: ^7.1.0
+  google_sign_in: ^6.1.5
+
 
  
 
