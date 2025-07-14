@@ -9,7 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:city_guide_app/App/explore.dart';
+import 'package:city_guide_app/App/Explore.dart';
 import 'package:city_guide_app/App/home.dart';
 import 'package:liquid_swipe/liquid_swipe.dart';
 
@@ -28,8 +28,8 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
 
   String _profileImageUrl =
       'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
-  File? _imageFile; // mobile preview
-  Uint8List? _webImageBytes; // web preview
+  File? _imageFile;
+  Uint8List? _webImageBytes;
   bool _isLoading = false;
 
   late final AnimationController _animationController;
@@ -38,7 +38,14 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   late final Animation<double> _scaleAnimation;
   final _formKey = GlobalKey<FormState>();
 
-  /* --------------------------- lifecycle --------------------------- */
+  // Color Scheme
+  final Color primaryColor = const Color(0xFF6A11CB);
+  final Color secondaryColor = const Color(0xFF2575FC);
+  final Color accentColor = const Color(0xFF7C4FDC);
+  final Color backgroundColor = const Color(0xFFF8F9FA);
+  final Color textColor = const Color(0xFF333333);
+  final Color lightTextColor = const Color(0xFF666666);
+
   @override
   void initState() {
     super.initState();
@@ -75,7 +82,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
-  /* ------------------------------ data ---------------------------- */
   Future<void> fetchUserData() async {
     setState(() => _isLoading = true);
     try {
@@ -110,15 +116,13 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     final XFile? picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
-    // 1️⃣ Instant local preview
     if (kIsWeb) {
       _webImageBytes = await picked.readAsBytes();
     } else {
       _imageFile = File(picked.path);
     }
-    setState(() {}); // refresh avatar immediately
+    setState(() {});
 
-    // 2️⃣ Upload with loader
     setState(() => _isLoading = true);
     try {
       final user = FirebaseAuth.instance.currentUser!;
@@ -137,7 +141,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
 
       final downloadUrl = await ref.getDownloadURL();
       _profileImageUrl = downloadUrl;
-      _imageFile = null; // clear temp files/bytes after successful upload
+      _imageFile = null;
       _webImageBytes = null;
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
@@ -150,7 +154,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Profile image updated successfully!'),
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: primaryColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
@@ -198,7 +202,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Profile updated successfully!'),
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: primaryColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
@@ -225,18 +229,17 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     }
   }
 
-  /* ------------------------------ UI ------------------------------ */
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: backgroundColor,
       body: LiquidSwipe(
         pages: [
           _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(child: CircularProgressIndicator(color: primaryColor))
               : SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Form(
@@ -252,19 +255,44 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
         ],
       ),
-      bottomNavigationBar: _buildBottomBar(context),
+      bottomNavigationBar: ConvexAppBar(
+        style: TabStyle.reactCircle,
+        height: 60,
+        items: const [
+          TabItem(icon: Icons.home, title: 'Home'),
+          TabItem(icon: Icons.explore, title: 'Explore'),
+          TabItem(icon: Icons.person, title: 'Profile'),
+        ],
+        initialActiveIndex: 2,
+        backgroundColor: Colors.white,
+        color: lightTextColor,
+        activeColor: accentColor,
+        elevation: 10,
+        onTap: (int i) {
+          if (i == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const Home()),
+            );
+          } else if (i == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => Explore()),
+            );
+          }
+        },
+      ),
     );
   }
 
-  /* ---------------------- UI helpers ---------------------- */
   Widget _buildHeader(Size size, ThemeData theme) {
     return Container(
       height: size.height * 0.25,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade400],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+          colors: [primaryColor, secondaryColor],
         ),
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
         boxShadow: [
@@ -360,12 +388,9 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     ),
                   ],
                   gradient: LinearGradient(
-                    colors: [
-                      Colors.deepPurple.shade100,
-                      Colors.deepPurple.shade50,
-                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
+                    colors: [primaryColor, secondaryColor],
                   ),
                 ),
               ),
@@ -413,7 +438,11 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [primaryColor, secondaryColor],
+                    ),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
                   ),
@@ -509,17 +538,14 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(15),
                     gradient: LinearGradient(
-                      colors: [
-                        Colors.deepPurple.shade600,
-                        Colors.deepPurple.shade400,
-                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
+                      colors: [primaryColor, secondaryColor],
                     ),
                   ),
                   child: Center(
                     child: Text(
-                      'UPDATE PROFILE',
+                      'Update Profile',
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -544,58 +570,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     ).animate().fadeIn(delay: delay.ms);
   }
 
-  Widget _buildBottomBar(BuildContext context) {
-    return ConvexAppBar(
-      style: TabStyle.reactCircle,
-      height: 70,
-      curveSize: 100,
-      items: const [
-        TabItem(icon: Icons.home_outlined, title: 'Home'),
-        TabItem(icon: Icons.explore_outlined, title: 'Explore'),
-        TabItem(icon: Icons.person_outline, title: 'Profile'),
-      ],
-      initialActiveIndex: 2,
-      backgroundColor: Colors.white,
-      color: Colors.grey,
-      activeColor: Colors.deepPurple,
-      shadowColor: Colors.deepPurpleAccent.withOpacity(0.3),
-      elevation: 10,
-      onTap: (index) {
-        if (index == 0) {
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (_, __, ___) => const Home(),
-              transitionsBuilder:
-                  (_, anim, __, child) => SlideTransition(
-                    position: Tween(
-                      begin: const Offset(-1, 0),
-                      end: Offset.zero,
-                    ).animate(anim),
-                    child: child,
-                  ),
-            ),
-          );
-        } else if (index == 1) {
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (_, __, ___) => explore(),
-              transitionsBuilder:
-                  (_, anim, __, child) => SlideTransition(
-                    position: Tween(
-                      begin: const Offset(1, 0),
-                      end: Offset.zero,
-                    ).animate(anim),
-                    child: child,
-                  ),
-            ),
-          );
-        }
-      },
-    ).animate().slide(delay: 1000.ms);
-  }
-
   Widget _buildProfileField({
     required TextEditingController controller,
     required String label,
@@ -612,7 +586,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
           child: Text(
             label,
             style: TextStyle(
-              color: Colors.deepPurple.shade600,
+              color: primaryColor,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
@@ -643,7 +617,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     right: BorderSide(color: Colors.grey.shade300, width: 1),
                   ),
                 ),
-                child: Icon(icon, color: Colors.deepPurple),
+                child: Icon(icon, color: primaryColor),
               ),
               filled: true,
               fillColor: Colors.white,
@@ -661,7 +635,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
-                borderSide: const BorderSide(color: Colors.deepPurple),
+                borderSide: BorderSide(color: primaryColor),
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),

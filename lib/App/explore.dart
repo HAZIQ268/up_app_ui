@@ -6,30 +6,44 @@ import 'package:flutter/material.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-class explore extends StatefulWidget {
-  const explore({super.key});
+class Explore extends StatefulWidget {
+  const Explore({super.key});
 
   @override
-  State<explore> createState() => _exploreState();
+  State<Explore> createState() => _ExploreState();
 }
 
-class _exploreState extends State<explore> {
+class _ExploreState extends State<Explore> {
   final DatabaseService _dbService = DatabaseService();
-  String selectedCategory = "All";
+  String selectedCategory = 'All';
   bool highestRated = true;
-  TextEditingController _searchController = TextEditingController();
-  String searchQuery = "";
+  final TextEditingController _searchController = TextEditingController();
+  String searchQuery = '';
 
-  List<String> categories = ["All", "Attractions", "Hotels", "Restaurants"];
+  // Color Scheme
+  final Color primaryColor = const Color(0xFF6A11CB);
+  final Color secondaryColor = const Color(0xFF2575FC);
+  final Color accentColor = const Color(0xFF7C4FDC);
+  final Color backgroundColor = const Color(0xFFF8F9FA);
+  final Color textColor = const Color(0xFF333333);
+  final Color lightTextColor = const Color(0xFF666666);
+
+  final List<String> categories = [
+    'All',
+    'Attractions',
+    'Hotels',
+    'Restaurants',
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: backgroundColor,
       body: CustomScrollView(
         slivers: [
-          // App Bar with Search
+          // ───────────────────── SliverAppBar + search ─────────────────────
           SliverAppBar(
+            automaticallyImplyLeading: false,
             expandedHeight: 120,
             floating: true,
             pinned: true,
@@ -39,41 +53,51 @@ class _exploreState extends State<explore> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF6A11CB).withOpacity(0.8),
-                      const Color(0xFF2575FC).withOpacity(0.8),
-                    ],
+                    colors: [primaryColor, secondaryColor],
                   ),
                 ),
               ),
-              titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
-              title: TextField(
-                controller: _searchController,
-                onChanged: (value) => setState(() => searchQuery = value),
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: "Search places...",
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                  prefixIcon: Icon(Icons.search, color: Colors.white),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.2),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
+              titlePadding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              title: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) => setState(() => searchQuery = value),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  decoration: InputDecoration(
+                    hintText: 'Search places...',
+                    hintStyle: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 16,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.only(top: 12),
+                  ),
                 ),
               ),
             ),
           ),
 
-          // Filters Section
+          // ───────────────────── Filters section ─────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Row(
                 children: [
-                  // Category Filter
+                  // Category filter
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
@@ -89,30 +113,29 @@ class _exploreState extends State<explore> {
                     ),
                     child: DropdownButton<String>(
                       value: selectedCategory,
-                      icon: const Icon(
-                        Icons.arrow_drop_down,
-                        color: Color(0xFF6A11CB),
-                      ),
+                      icon: Icon(Icons.arrow_drop_down, color: textColor),
                       underline: const SizedBox(),
                       onChanged:
                           (String? newValue) =>
                               setState(() => selectedCategory = newValue!),
                       items:
-                          categories.map((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(
-                                value,
-                                style: const TextStyle(color: Colors.black87),
-                              ),
-                            );
-                          }).toList(),
+                          categories
+                              .map(
+                                (value) => DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(
+                                    value,
+                                    style: TextStyle(color: textColor),
+                                  ),
+                                ),
+                              )
+                              .toList(),
                     ),
                   ),
 
                   const Spacer(),
 
-                  // Rating Filter
+                  // Rating filter
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -132,20 +155,18 @@ class _exploreState extends State<explore> {
                     child: Row(
                       children: [
                         Text(
-                          "Rating",
+                          'Rating',
                           style: TextStyle(
-                            color: Colors.grey[700],
+                            color: lightTextColor,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          "Low",
+                          'Low',
                           style: TextStyle(
                             color:
-                                !highestRated
-                                    ? const Color(0xFF6A11CB)
-                                    : Colors.grey[500],
+                                !highestRated ? secondaryColor : lightTextColor,
                             fontWeight:
                                 !highestRated
                                     ? FontWeight.bold
@@ -154,18 +175,15 @@ class _exploreState extends State<explore> {
                         ),
                         Switch(
                           value: highestRated,
-                          activeColor: const Color(0xFF6A11CB),
+                          activeColor: accentColor,
                           onChanged:
-                              (bool value) =>
-                                  setState(() => highestRated = value),
+                              (value) => setState(() => highestRated = value),
                         ),
                         Text(
-                          "High",
+                          'High',
                           style: TextStyle(
                             color:
-                                highestRated
-                                    ? const Color(0xFF6A11CB)
-                                    : Colors.grey[500],
+                                highestRated ? secondaryColor : lightTextColor,
                             fontWeight:
                                 highestRated
                                     ? FontWeight.bold
@@ -180,7 +198,7 @@ class _exploreState extends State<explore> {
             ),
           ),
 
-          // Listings
+          // ───────────────────── Listings ─────────────────────
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             sliver: FutureBuilder<List<Map<String, dynamic>>>(
@@ -191,10 +209,12 @@ class _exploreState extends State<explore> {
               ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return SliverFillRemaining(
+                  return const SliverFillRemaining(
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: const Color(0xFF6A11CB),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFF2575FC),
+                        ),
                       ),
                     ),
                   );
@@ -212,10 +232,28 @@ class _exploreState extends State<explore> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            "No listings found",
+                            'No listings found',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey[600],
+                              color: lightTextColor,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ElevatedButton(
+                            onPressed: () => setState(() {}),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: secondaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                            child: const Text(
+                              'Refresh',
+                              style: TextStyle(color: Colors.white),
                             ),
                           ),
                         ],
@@ -240,7 +278,7 @@ class _exploreState extends State<explore> {
         ],
       ),
 
-      // Bottom Navigation Bar
+      // ───────────────────── Bottom navigation ─────────────────────
       bottomNavigationBar: ConvexAppBar(
         style: TabStyle.reactCircle,
         height: 60,
@@ -251,20 +289,19 @@ class _exploreState extends State<explore> {
         ],
         initialActiveIndex: 1,
         backgroundColor: Colors.white,
-        color: Colors.grey,
-        activeColor: const Color(0xFF6A11CB),
+        color: lightTextColor,
+        activeColor: accentColor,
         elevation: 10,
-        shadowColor: const Color(0xFF6A11CB).withOpacity(0.2),
-        onTap: (int index) {
+        onTap: (index) {
           if (index == 0) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const Home()),
+              MaterialPageRoute(builder: (_) => const Home()),
             );
           } else if (index == 2) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const Profile()),
+              MaterialPageRoute(builder: (_) => const Profile()),
             );
           }
         },
@@ -272,7 +309,7 @@ class _exploreState extends State<explore> {
     );
   }
 
-  // Listing Card Widget
+  // ───────────────────── Listing card widget ─────────────────────
   Widget listingCard(Map<String, dynamic> listing, BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -283,7 +320,7 @@ class _exploreState extends State<explore> {
             context,
             MaterialPageRoute(
               builder:
-                  (context) => Detail(
+                  (_) => Detail(
                     listing: listing,
                     collection: listing['collection'] ?? 'unknown_collection',
                     documentId: listing['documentId'] ?? 'unknown_document',
@@ -293,7 +330,7 @@ class _exploreState extends State<explore> {
         },
         child: Stack(
           children: [
-            // Background Image with Gradient
+            // Image + dark fade overlay
             Container(
               height: 180,
               decoration: BoxDecoration(
@@ -312,31 +349,27 @@ class _exploreState extends State<explore> {
                 child: Stack(
                   children: [
                     Image.network(
-                      listing['image_url'] ?? "",
+                      listing['image_url'] ?? '',
                       width: double.infinity,
                       height: double.infinity,
                       fit: BoxFit.cover,
                       errorBuilder:
-                          (context, error, stackTrace) => Container(
+                          (_, __, ___) => Container(
                             color: Colors.grey[200],
-                            child: const Center(
-                              child: Icon(
-                                Icons.image_not_supported,
-                                size: 50,
-                                color: Colors.grey,
-                              ),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.image_not_supported,
+                              size: 50,
+                              color: Colors.grey,
                             ),
                           ),
                     ),
                     Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.7),
-                          ],
+                          colors: [Colors.transparent, Colors.black87],
                         ),
                       ),
                     ),
@@ -345,7 +378,7 @@ class _exploreState extends State<explore> {
               ),
             ),
 
-            // Content
+            // Text + rating chip overlay
             Positioned(
               left: 0,
               right: 0,
@@ -355,13 +388,12 @@ class _exploreState extends State<explore> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name and Rating
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: Text(
-                            listing['name'] ?? "Unnamed Listing",
+                            listing['name'] ?? 'Unnamed Listing',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
@@ -371,13 +403,18 @@ class _exploreState extends State<explore> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        // Rating chip with gradient
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6A11CB),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [primaryColor, secondaryColor],
+                            ),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -390,7 +427,7 @@ class _exploreState extends State<explore> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                "${listing['rating'] ?? 'N/A'}",
+                                '${listing['rating'] ?? 'N/A'}',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -401,12 +438,9 @@ class _exploreState extends State<explore> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 8),
-
-                    // Description
                     Text(
-                      listing['description'] ?? "No description available",
+                      listing['description'] ?? 'No description available',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: 14,
@@ -414,10 +448,7 @@ class _exploreState extends State<explore> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-
                     const SizedBox(height: 8),
-
-                    // Category Tag
                     if (listing['category'] != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -425,15 +456,16 @@ class _exploreState extends State<explore> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [primaryColor, secondaryColor],
                           ),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           listing['category'].toString().toUpperCase(),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -445,7 +477,7 @@ class _exploreState extends State<explore> {
               ),
             ),
 
-            // Favorite Button
+            // Heart icon overlay
             Positioned(
               top: 16,
               right: 16,

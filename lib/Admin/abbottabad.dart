@@ -403,39 +403,27 @@ class _abbottabadState extends State<abbottabad> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF6A11CB).withOpacity(0.8),
-                const Color(0xFF2575FC).withOpacity(0.8),
-              ],
+              colors: [Colors.indigo.shade700, Colors.blue.shade500],
             ),
           ),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Abbottabad Attractions',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ],
+        title: Text(
+          'Abbottabad Attractions',
+          style: TextStyle(fontFamily: 'Poppins', color: Colors.white),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.add, size: 28),
+            icon: Icon(Icons.add, size: 28, color: Colors.white),
             onPressed: showAddProductDialog,
           ).animate().fadeIn(delay: 200.ms),
         ],

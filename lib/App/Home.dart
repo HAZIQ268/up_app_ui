@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:city_guide_app/App/Abbotabad.dart';
 import 'package:city_guide_app/App/Islamabad.dart';
 import 'package:city_guide_app/App/Karachi.dart';
-import 'package:city_guide_app/App/explore.dart';
+import 'package:city_guide_app/App/Explore.dart';
 import 'package:city_guide_app/App/lahore.dart';
 import 'package:city_guide_app/App/login.dart';
 import 'package:city_guide_app/App/multan.dart';
@@ -31,6 +31,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   bool isLoading = true;
   late AnimationController _animationController;
   final TextEditingController _searchController = TextEditingController();
+
+  // Color Scheme
+  final Color primaryColor = const Color(0xFF6A11CB);
+  final Color secondaryColor = const Color(0xFF2575FC);
+  final Color accentColor = const Color(0xFF7C4FDC);
+  final Color backgroundColor = const Color(0xFFF8F9FA);
+  final Color textColor = const Color(0xFF333333);
+  final Color lightTextColor = const Color(0xFF666666);
 
   @override
   void initState() {
@@ -126,18 +134,19 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                const Color(0xFF6A11CB).withOpacity(0.8),
-                const Color(0xFF2575FC).withOpacity(0.8),
+                primaryColor.withOpacity(0.8),
+                secondaryColor.withOpacity(0.8),
               ],
             ),
           ),
@@ -196,14 +205,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Search cities...',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                    hintStyle: TextStyle(color: lightTextColor),
+                    prefixIcon: Icon(Icons.search, color: lightTextColor),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 18),
                     suffixIcon:
                         _searchController.text.isNotEmpty
                             ? IconButton(
-                              icon: Icon(Icons.close, color: Colors.grey[500]),
+                              icon: Icon(Icons.close, color: lightTextColor),
                               onPressed: () {
                                 _searchController.clear();
                                 _filterCities();
@@ -226,11 +235,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                    colors: [primaryColor, secondaryColor],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
+                      color: secondaryColor.withOpacity(0.3),
                       blurRadius: 15,
                       spreadRadius: 2,
                     ),
@@ -262,7 +271,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               fontFamily: 'Poppins',
                             ),
                           ),
-                          SizedBox(height: 5),
+                          const SizedBox(height: 5),
                           Text(
                             'Explore the best places in Pakistan',
                             style: TextStyle(
@@ -271,9 +280,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               fontFamily: 'Poppins',
                             ),
                           ),
-                          Spacer(),
+                          const Spacer(),
                           Container(
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 15,
                               vertical: 8,
                             ),
@@ -284,7 +293,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             child: Text(
                               'Get Started',
                               style: TextStyle(
-                                color: Color(0xFF2575FC),
+                                color: secondaryColor,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'Poppins',
                               ),
@@ -297,30 +306,32 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 ),
               ).animate().fadeIn(delay: 200.ms),
             ),
+
             // Categories Section
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 30, 20, 15),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Categories',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
+                      color: textColor,
                     ),
                   ),
                   TextButton(
                     onPressed:
                         () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => explore()),
+                          MaterialPageRoute(builder: (_) => Explore()),
                         ),
                     child: Text(
                       'See All',
                       style: TextStyle(
-                        color: const Color(0xFF2575FC),
+                        color: secondaryColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -338,11 +349,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   _buildCategoryCard(
                     icon: Icons.landscape,
                     title: 'Attractions',
-                    color: const Color(0xFF6A11CB),
+                    color: primaryColor,
                     onTap:
                         () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => explore()),
+                          MaterialPageRoute(builder: (_) => Explore()),
                         ),
                   ),
                   _buildCategoryCard(
@@ -352,17 +363,17 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     onTap:
                         () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => explore()),
+                          MaterialPageRoute(builder: (_) => Explore()),
                         ),
                   ),
                   _buildCategoryCard(
                     icon: Icons.hotel,
                     title: 'Hotels',
-                    color: const Color(0xFF2575FC),
+                    color: secondaryColor,
                     onTap:
                         () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => explore()),
+                          MaterialPageRoute(builder: (_) => Explore()),
                         ),
                   ),
                   _buildCategoryCard(
@@ -372,7 +383,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     onTap:
                         () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => explore()),
+                          MaterialPageRoute(builder: (_) => Explore()),
                         ),
                   ),
                 ].animate(interval: 100.ms).slideX(begin: 0.5),
@@ -385,24 +396,25 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Popular Cities',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
+                      color: textColor,
                     ),
                   ),
                   TextButton(
                     onPressed:
                         () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const explore()),
+                          MaterialPageRoute(builder: (_) => const Explore()),
                         ),
                     child: Text(
                       'See All',
                       style: TextStyle(
-                        color: const Color(0xFF2575FC),
+                        color: secondaryColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -412,7 +424,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             ),
 
             isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator(color: primaryColor))
                 : Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: GridView.builder(
@@ -502,18 +514,17 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       ),
       bottomNavigationBar: ConvexAppBar(
         style: TabStyle.reactCircle,
+        height: 60,
         items: const [
           TabItem(icon: Icons.home, title: 'Home'),
-          TabItem(icon: Icons.map, title: 'Explore'),
+          TabItem(icon: Icons.explore, title: 'Explore'),
           TabItem(icon: Icons.person, title: 'Profile'),
         ],
         initialActiveIndex: 0,
         backgroundColor: Colors.white,
-        color: Colors.grey,
-        activeColor: const Color(0xFF6A11CB),
-        height: 65,
+        color: lightTextColor,
+        activeColor: accentColor,
         elevation: 10,
-        shadowColor: const Color(0xFF6A11CB).withOpacity(0.3),
         onTap: (int i) {
           if (i == 0) {
             Navigator.pushReplacement(
@@ -523,7 +534,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           } else if (i == 1) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => explore()),
+              MaterialPageRoute(builder: (context) => Explore()),
             );
           } else if (i == 2) {
             Navigator.pushReplacement(
@@ -540,7 +551,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.85,
       child: Container(
-        decoration: const BoxDecoration(color: Colors.white),
+        decoration: BoxDecoration(color: backgroundColor),
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
@@ -558,14 +569,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     right: 25,
                   ),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                      colors: [primaryColor, secondaryColor],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF6A11CB).withOpacity(0.2),
+                        color: primaryColor.withOpacity(0.2),
                         blurRadius: 20,
                         spreadRadius: 2,
                       ),
@@ -599,7 +610,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                 loadingProgress,
                               ) {
                                 if (loadingProgress == null) return child;
-                                return const Center(
+                                return Center(
                                   child: CircularProgressIndicator(
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                       Colors.white,
@@ -654,7 +665,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const explore()),
+                  MaterialPageRoute(builder: (context) => const Explore()),
                 );
               },
             ),
@@ -733,17 +744,18 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: const Color(0xFF6A11CB).withOpacity(0.1),
+          color: primaryColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: const Color(0xFF6A11CB)),
+        child: Icon(icon, color: primaryColor),
       ),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Poppins',
           fontSize: 16,
           fontWeight: FontWeight.w500,
+          color: textColor,
         ),
       ),
       onTap: onTap,
@@ -789,7 +801,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             const SizedBox(height: 10),
             Text(
               title,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
             ),
           ],
         ),
@@ -836,14 +852,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               ? progress.cumulativeBytesLoaded /
                                   progress.expectedTotalBytes!
                               : null,
-                      color: const Color(0xFF6A11CB),
+                      color: primaryColor,
                     ),
                   );
                 },
                 errorBuilder:
                     (context, error, stackTrace) => Container(
                       color: Colors.grey[200],
-                      child: const Center(
+                      child: Center(
                         child: Icon(Icons.image, color: Colors.grey),
                       ),
                     ),
@@ -912,7 +928,18 @@ class CategoryPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(category),
-        backgroundColor: const Color(0xFF6A11CB),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF6A11CB).withOpacity(0.8),
+                const Color(0xFF2575FC).withOpacity(0.8),
+              ],
+            ),
+          ),
+        ),
       ),
       body: Center(
         child: Text(

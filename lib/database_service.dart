@@ -51,7 +51,9 @@ class DatabaseService {
   // Fetch City from Firestore
   Future<List<Map<String, dynamic>>> getCity() async {
     QuerySnapshot snapshot = await _firestore.collection('cities').get();
-    return snapshot.docs.map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>}).toList();
+    return snapshot.docs
+        .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
+        .toList();
   }
 
   // Add New City
