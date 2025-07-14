@@ -363,27 +363,45 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       backgroundColor: Color(0xFFF5F7FA),
       appBar: AppBar(
         systemOverlayStyle: SystemUiOverlayStyle(
-          statusBarColor: Colors.indigo,
-          statusBarIconBrightness: Brightness.light,
+          statusBarColor: Colors.transparent, 
+          statusBarIconBrightness:
+              Brightness.light, 
         ),
+
+        // --- title ---
         title: Text(
           'User Management',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: Colors.indigo,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(15)),
         ),
+        iconTheme: IconThemeData(color: Colors.white),
+        actionsIconTheme: IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.indigo.shade700, Colors.blue.shade500],
+            ),
+          ),
+        ),
+
+        // action buttons
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: Colors.white),
+            icon: const Icon(Icons.refresh),
             onPressed: _fetchUsers,
             tooltip: 'Refresh',
           ),
         ],
       ),
+
       body: Column(
         children: [
           Padding(

@@ -437,23 +437,44 @@ class _CategoryAdminPanelState extends State<CategoryAdminPanel> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        systemOverlayStyle: SystemUiOverlayStyle(
-          statusBarColor: Colors.deepOrange,
-          statusBarIconBrightness: Brightness.light,
-        ),
-        title: Text('Categories', style: TextStyle(color: Colors.white)),
-        centerTitle: true,
-        backgroundColor: Colors.indigo,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: Colors.white),
-            onPressed: _showAddCategoryDialog,
-            tooltip: 'Add Category',
-          ),
+     appBar: AppBar(
+  systemOverlayStyle:  SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent, // Gradient ke liye transparent
+    statusBarIconBrightness: Brightness.light,
+  ),
+  title: Text(
+    'Categories',
+    style: TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+  centerTitle: true,
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  iconTheme: const IconThemeData(color: Colors.white),
+  actionsIconTheme: const IconThemeData(color: Colors.white),
+  flexibleSpace: Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.indigo.shade700,
+          Colors.blue.shade500,
         ],
       ),
+    ),
+  ),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.add),
+      onPressed: _showAddCategoryDialog,
+      tooltip: 'Add Category',
+    ),
+  ],
+),
+
       body:
           _isLoading
               ? Center(

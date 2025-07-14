@@ -424,23 +424,39 @@ class _karachiState extends State<karachi> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Karachi Attractions',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        backgroundColor: Colors.indigo,
-        iconTheme: IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add, size: 28),
-            onPressed: showAddProductDialog,
-          ),
+  title: const Text(
+    'Karachi Attractions',
+    style: TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+      fontSize: 20,
+    ),
+  ),
+  centerTitle: true,
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  iconTheme: const IconThemeData(color: Colors.white),
+  actionsIconTheme: const IconThemeData(color: Colors.white),
+  flexibleSpace: Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.indigo.shade700,
+          Colors.blue.shade500,
         ],
       ),
+    ),
+  ),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.add, size: 28),
+      onPressed: showAddProductDialog,
+    ),
+  ],
+),
+
       body:
           isLoading
               ? Center(

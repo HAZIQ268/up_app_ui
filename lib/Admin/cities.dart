@@ -413,28 +413,46 @@ class _CitiesAdminPanelState extends State<CitiesAdminPanel> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF5F7FA),
-      appBar: AppBar(
-        systemOverlayStyle: SystemUiOverlayStyle(
-          statusBarColor: Colors.indigo,
-          statusBarIconBrightness: Brightness.light,
-        ),
-        title: Text(
-          'Cities Management',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.indigo,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(15)),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: Colors.white),
-            onPressed: _showAddCityDialog,
-          ),
+  appBar: AppBar(
+  systemOverlayStyle: const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+  ),
+  title: const Text(
+    'Cities Management',
+    style: TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+  centerTitle: true,
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  iconTheme: const IconThemeData(color: Colors.white),
+  actionsIconTheme: const IconThemeData(color: Colors.white),
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(bottom: Radius.circular(15)),
+  ),
+  flexibleSpace: Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.indigo.shade700,
+          Colors.blue.shade500,
         ],
       ),
+    ),
+  ),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.add),
+      onPressed: _showAddCityDialog,
+    ),
+  ],
+),
+
       body:
           isLoading
               ? Center(
