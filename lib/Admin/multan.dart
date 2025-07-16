@@ -1,18 +1,118 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:flutter/services.dart';
 
-class multan extends StatefulWidget {
-  const multan({super.key});
+/// ---------------------------------------------------------------------------
+/// 🌈  Shared gradient + reusable widgets (same as other city screens)
+/// ---------------------------------------------------------------------------
+const LinearGradient kGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [
+    Color(0xFF283593), // indigo
+    Color(0xFF42A5F5), // blue
+  ],
+);
+
+class GradientIcon extends StatelessWidget {
+  final IconData icon;
+  final double size;
+  const GradientIcon(this.icon, {Key? key, this.size = 24}) : super(key: key);
 
   @override
-  State<multan> createState() => _multanState();
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (rect) => kGradient.createShader(rect),
+      blendMode: BlendMode.srcIn,
+      child: Icon(icon, size: size, color: Colors.white),
+    );
+  }
 }
 
-class _multanState extends State<multan> {
+class GradientButton extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onPressed;
+  final double borderRadius;
+  const GradientButton({
+    Key? key,
+    required this.child,
+    required this.onPressed,
+    this.borderRadius = 12,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      borderRadius: BorderRadius.circular(borderRadius),
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(borderRadius),
+        onTap: onPressed,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: kGradient,
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+          child: Center(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: DefaultTextStyle.merge(
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class GradientActionButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  const GradientActionButton({Key? key, required this.onPressed})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: kGradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              offset: Offset(0, 4),
+              blurRadius: 6,
+            )
+          ],
+        ),
+        child: const GradientIcon(Icons.add, size: 28),
+      ),
+    );
+  }
+}
+
+/// ---------------------------------------------------------------------------
+/// 🕌  Multan Attractions Screen with unified theme
+/// ---------------------------------------------------------------------------
+class MultanScreen extends StatefulWidget {
+  const MultanScreen({super.key});
+  @override
+  State<MultanScreen> createState() => _MultanScreenState();
+}
+
+class _MultanScreenState extends State<MultanScreen> {
   List<Map<String, dynamic>> _products = [];
   List<Map<String, dynamic>> _filteredProducts = [];
-  TextEditingController searchController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
   bool isLoading = true;
   String _sortCriteria = 'Rating';
 
@@ -22,37 +122,30 @@ class _multanState extends State<multan> {
     fetchData();
   }
 
+  /* ---------------------------  Firestore Ops  --------------------------- */
+
   Future<void> fetchData() async {
     try {
-      final userdata =
-          await FirebaseFirestore.instance.collection('multan').get();
-      final rawdata =
-          userdata.docs.map((doc) => doc.data()..['id'] = doc.id).toList();
-
+      final snap = await FirebaseFirestore.instance.collection('multan').get();
+      final raw =
+          snap.docs.map((d) => d.data()..['id'] = d.id).toList(growable: false);
       setState(() {
-        _products = rawdata;
-        _filteredProducts = List.from(rawdata)..sort(_sortByCriteria);
+        _products = raw;
+        _filteredProducts = List.from(raw)..sort(_sortByCriteria);
         isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error fetching data: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() => isLoading = false);
+      _showSnackBar('Error fetching data: $e', isError: true);
     }
   }
 
   int _sortByCriteria(a, b) {
     switch (_sortCriteria) {
       case 'Rating':
-        double ratingA = double.tryParse(a["rating"].toString()) ?? 0.0;
-        double ratingB = double.tryParse(b["rating"].toString()) ?? 0.0;
-        return ratingB.compareTo(ratingA);
+        final ra = double.tryParse(a['rating']?.toString() ?? '') ?? 0.0;
+        final rb = double.tryParse(b['rating']?.toString() ?? '') ?? 0.0;
+        return rb.compareTo(ra);
       case 'Name':
         return a['name'].compareTo(b['name']);
       default:
@@ -60,628 +153,361 @@ class _multanState extends State<multan> {
     }
   }
 
-  Future<void> updateData(String docId, Map<String, dynamic> newData) async {
+  Future<void> updateData(String id, Map<String, dynamic> data) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('multan')
-          .doc(docId)
-          .update(newData);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Attraction updated successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      await FirebaseFirestore.instance.collection('multan').doc(id).update(data);
+      _showSnackBar('Attraction updated successfully!');
       fetchData();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error updating data: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showSnackBar('Error updating data: $e', isError: true);
     }
   }
 
-  Future<void> deleteData(String docId) async {
+  Future<void> deleteData(String id) async {
     try {
-      await FirebaseFirestore.instance.collection('multan').doc(docId).delete();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Attraction deleted successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      await FirebaseFirestore.instance.collection('multan').doc(id).delete();
+      _showSnackBar('Attraction deleted successfully!');
       fetchData();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error deleting data: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showSnackBar('Error deleting data: $e', isError: true);
     }
   }
 
-  void deleteDialog(String docId) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(
-              'Delete Attraction',
-              style: TextStyle(color: Colors.deepOrange.shade800),
-            ),
-            content: Text('Are you sure you want to delete this attraction?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepOrange,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () {
-                  deleteData(docId);
-                  Navigator.of(context).pop();
-                },
-                child: Text('Delete', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
+  /* ----------------------------------------------------------------------- */
+  /*                                UI helpers                               */
+  /* ----------------------------------------------------------------------- */
+
+  void _showSnackBar(String msg, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
   }
 
-  void showEditDialog(Map<String, dynamic> attraction) {
-    final formKey = GlobalKey<FormState>();
-    final controllers = {
-      "description": TextEditingController(text: attraction["description"]),
-      "image_url": TextEditingController(text: attraction["image_url"]),
-      "name": TextEditingController(text: attraction["name"]),
-      "subCategory": TextEditingController(text: attraction["subCategory"]),
-      "rating": TextEditingController(text: attraction["rating"].toString()),
-      "longitude": TextEditingController(
-        text: attraction["longitude"].toString(),
-      ),
-      "latitude": TextEditingController(
-        text: attraction["latitude"].toString(),
-      ),
-      "location": TextEditingController(text: attraction["location"]),
-    };
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(20),
-              child: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Edit Attraction',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepOrange,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    _buildFormField(controllers["description"]!, 'Description'),
-                    _buildFormField(controllers["image_url"]!, 'Image URL'),
-                    _buildFormField(controllers["name"]!, 'Attraction Name'),
-                    _buildFormField(controllers["subCategory"]!, 'SubCategory'),
-                    _buildFormField(
-                      controllers["rating"]!,
-                      'Rating',
-                      isNumber: true,
-                    ),
-                    _buildFormField(
-                      controllers["longitude"]!,
-                      'Longitude',
-                      isNumber: true,
-                    ),
-                    _buildFormField(
-                      controllers["latitude"]!,
-                      'Latitude',
-                      isNumber: true,
-                    ),
-                    _buildFormField(controllers["location"]!, 'Location'),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(
-                            'Cancel',
-                            style: TextStyle(color: Colors.grey.shade600),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepOrange,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onPressed: () {
-                            if (formKey.currentState!.validate()) {
-                              final updatedData = {
-                                "description": controllers["description"]!.text,
-                                "image_url": controllers["image_url"]!.text,
-                                "name": controllers["name"]!.text,
-                                "subCategory": controllers["subCategory"]!.text,
-                                "rating":
-                                    double.tryParse(
-                                      controllers["rating"]!.text,
-                                    ) ??
-                                    0.0,
-                                "longitude":
-                                    double.tryParse(
-                                      controllers["longitude"]!.text,
-                                    ) ??
-                                    0.0,
-                                "latitude":
-                                    double.tryParse(
-                                      controllers["latitude"]!.text,
-                                    ) ??
-                                    0.0,
-                                "location": controllers["location"]!.text,
-                              };
-                              updateData(attraction["id"], updatedData);
-                              Navigator.of(context).pop();
-                            }
-                          },
-                          child: Text(
-                            'Update',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-    );
-  }
-
-  Widget _buildFormField(
-    TextEditingController controller,
-    String label, {
-    bool isNumber = false,
-  }) {
+  Widget _buildFormField(TextEditingController c, String label,
+      {bool isNum = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
-        controller: controller,
+        controller: c,
+        keyboardType: isNum ? TextInputType.number : TextInputType.text,
+        validator: (v) => v == null || v.isEmpty ? 'Required' : null,
         decoration: InputDecoration(
           labelText: label,
+          prefixIcon: GradientIcon(Icons.edit),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.grey.shade50,
+          fillColor: Colors.grey.shade100,
         ),
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        validator: (value) => value!.isEmpty ? 'Required' : null,
-      ),
-    );
-  }
-
-  void showAddProductDialog() {
-    final formKey = GlobalKey<FormState>();
-    final controllers = {
-      "description": TextEditingController(),
-      "image_url": TextEditingController(),
-      "name": TextEditingController(),
-      "subCategory": TextEditingController(),
-      "rating": TextEditingController(),
-      "longitude": TextEditingController(),
-      "latitude": TextEditingController(),
-      "location": TextEditingController(),
-    };
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(20),
-              child: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Add New Attraction',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepOrange,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    _buildFormField(controllers["description"]!, 'Description'),
-                    _buildFormField(controllers["image_url"]!, 'Image URL'),
-                    _buildFormField(controllers["name"]!, 'Attraction Name'),
-                    _buildFormField(controllers["subCategory"]!, 'SubCategory'),
-                    _buildFormField(
-                      controllers["rating"]!,
-                      'Rating',
-                      isNumber: true,
-                    ),
-                    _buildFormField(
-                      controllers["longitude"]!,
-                      'Longitude',
-                      isNumber: true,
-                    ),
-                    _buildFormField(
-                      controllers["latitude"]!,
-                      'Latitude',
-                      isNumber: true,
-                    ),
-                    _buildFormField(controllers["location"]!, 'Location'),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(
-                            'Cancel',
-                            style: TextStyle(color: Colors.grey.shade600),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepOrange,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onPressed: () {
-                            if (formKey.currentState!.validate()) {
-                              final newProduct = {
-                                "description": controllers["description"]!.text,
-                                "image_url": controllers["image_url"]!.text,
-                                "name": controllers["name"]!.text,
-                                "subCategory": controllers["subCategory"]!.text,
-                                "rating":
-                                    double.tryParse(
-                                      controllers["rating"]!.text,
-                                    ) ??
-                                    0.0,
-                                "longitude":
-                                    double.tryParse(
-                                      controllers["longitude"]!.text,
-                                    ) ??
-                                    0.0,
-                                "latitude":
-                                    double.tryParse(
-                                      controllers["latitude"]!.text,
-                                    ) ??
-                                    0.0,
-                                "location": controllers["location"]!.text,
-                              };
-                              FirebaseFirestore.instance
-                                  .collection('multan')
-                                  .add(newProduct)
-                                  .then((_) {
-                                    fetchData();
-                                    Navigator.of(context).pop();
-                                  });
-                            }
-                          },
-                          child: Text(
-                            'Add Attraction',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-    );
-  }
-
-  void searchProducts(String query) {
-    setState(() {
-      _filteredProducts =
-          _products.where((product) {
-            final name = product['name'].toString().toLowerCase();
-            final description = product['description'].toString().toLowerCase();
-            return name.contains(query.toLowerCase()) ||
-                description.contains(query.toLowerCase());
-          }).toList();
-    });
-  }
-
-  void sortProducts(String criterion) {
-    setState(() {
-      _sortCriteria = criterion;
-      _filteredProducts.sort(_sortByCriteria);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-     appBar: AppBar(
-  title: const Text(
-    'Multan Attractions',
-    style: TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.bold,
-      fontSize: 20,
-    ),
-  ),
-  centerTitle: true,
-  backgroundColor: Colors.transparent,
-  elevation: 0,
-  iconTheme: const IconThemeData(color: Colors.white),
-  actionsIconTheme: const IconThemeData(color: Colors.white),
-  flexibleSpace: Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Colors.indigo.shade700,
-          Colors.blue.shade500,
-        ],
-      ),
-    ),
-  ),
-  actions: [
-    IconButton(
-      icon: const Icon(Icons.add, size: 28),
-      onPressed: showAddProductDialog,
-    ),
-  ],
-),
-
-      body:
-          isLoading
-              ? Center(
-                child: CircularProgressIndicator(color: Colors.deepOrange),
-              )
-              : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            blurRadius: 10,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search attractions...',
-                          hintStyle: TextStyle(color: Colors.grey.shade500),
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Colors.deepOrange,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 20,
-                          ),
-                        ),
-                        onChanged: searchProducts,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildSortButton('Rating', Icons.star),
-                        _buildSortButton('Name', Icons.sort_by_alpha),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Expanded(
-                    child:
-                        _filteredProducts.isEmpty
-                            ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.search_off,
-                                    size: 60,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                  Text(
-                                    'No attractions found',
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                            : ListView.builder(
-                              padding: EdgeInsets.only(bottom: 16),
-                              itemCount: _filteredProducts.length,
-                              itemBuilder: (context, index) {
-                                final attraction = _filteredProducts[index];
-                                return _buildAttractionCard(attraction);
-                              },
-                            ),
-                  ),
-                ],
-              ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: showAddProductDialog,
-        backgroundColor: Colors.deepOrange,
-        child: Icon(Icons.add, color: Colors.white),
-        elevation: 4,
       ),
     );
   }
 
   Widget _buildSortButton(String label, IconData icon) {
-    return OutlinedButton.icon(
-      icon: Icon(
-        icon,
-        size: 16,
-        color: _sortCriteria == label ? Colors.deepOrange : Colors.grey,
+    return GradientButton(
+      onPressed: () => setState(() {
+        _sortCriteria = label;
+        _filteredProducts.sort(_sortByCriteria);
+      }),
+      borderRadius: 8,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GradientIcon(icon, size: 16),
+          const SizedBox(width: 6),
+          Text(label),
+        ],
       ),
-      label: Text(
-        label,
-        style: TextStyle(
-          color: _sortCriteria == label ? Colors.deepOrange : Colors.grey,
-        ),
-      ),
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(
-          color:
-              _sortCriteria == label ? Colors.deepOrange : Colors.grey.shade300,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      ),
-      onPressed: () => sortProducts(label),
     );
   }
 
-  Widget _buildAttractionCard(Map<String, dynamic> attraction) {
+  Widget _buildCard(Map<String, dynamic> a) {
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => showEditDialog(attraction),
+        onTap: () => _showEditDialog(a),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (attraction["image_url"] != null &&
-                      attraction["image_url"].toString().isNotEmpty)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        attraction["image_url"],
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (context, error, stackTrace) => Container(
-                              width: 100,
-                              height: 100,
-                              color: Colors.grey.shade200,
-                              child: Icon(
-                                Icons.broken_image,
-                                color: Colors.grey.shade400,
-                              ),
-                            ),
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              if (a['image_url']?.toString().isNotEmpty ?? false)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    a['image_url'],
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 100,
+                      height: 100,
+                      color: Colors.grey.shade200,
+                      child: const GradientIcon(Icons.broken_image, size: 30),
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(a['name'] ?? 'No Name',
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF283593))),
+                      const SizedBox(height: 4),
+                      Text(a['subCategory'] ?? 'No Category',
+                          style: TextStyle(color: Colors.grey.shade600)),
+                      const SizedBox(height: 8),
+                      RatingBarIndicator(
+                        rating:
+                            double.tryParse(a['rating']?.toString() ?? '') ?? 0,
+                        itemBuilder: (_, __) =>
+                            const Icon(Icons.star, color: Colors.amber),
+                        itemCount: 5,
+                        itemSize: 20,
                       ),
-                    ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          attraction["name"] ?? 'No Name',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepOrange.shade800,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          attraction["subCategory"] ?? 'No Category',
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        RatingBarIndicator(
-                          rating:
-                              double.tryParse(
-                                attraction["rating"].toString(),
-                              ) ??
-                              0.0,
-                          itemBuilder:
-                              (context, index) =>
-                                  Icon(Icons.star, color: Colors.amber),
-                          itemCount: 5,
-                          itemSize: 20,
-                          direction: Axis.horizontal,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                    ]),
               ),
-              SizedBox(height: 12),
-              Text(
-                attraction["description"] ?? 'No description available',
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.grey.shade700),
+            ]),
+            const SizedBox(height: 12),
+            Text(
+              a['description'] ?? 'No description available',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.grey.shade700),
+            ),
+            const SizedBox(height: 12),
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              IconButton(
+                icon: const GradientIcon(Icons.edit),
+                onPressed: () => _showEditDialog(a),
               ),
-              SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.edit, color: Colors.deepOrange),
-                    onPressed: () => showEditDialog(attraction),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => deleteDialog(attraction["id"]),
-                  ),
-                ],
+              IconButton(
+                icon: const GradientIcon(Icons.delete),
+                onPressed: () => _deleteDialog(a['id']),
               ),
-            ],
-          ),
+            ]),
+          ]),
         ),
       ),
+    );
+  }
+
+  /* --------------------------  Dialogs / Sheets  ------------------------- */
+
+  void _deleteDialog(String id) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const GradientIcon(Icons.warning, size: 32),
+        content: const Text('Are you sure you want to delete this attraction?'),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          GradientButton(
+              onPressed: () {
+                deleteData(id);
+                Navigator.pop(context);
+              },
+              child: const Text('DELETE')),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog(Map<String, dynamic> a) => _showAddEditSheet(attraction: a);
+
+  void _showAddEditSheet({Map<String, dynamic>? attraction}) {
+    final key = GlobalKey<FormState>();
+    final c = {
+      'description': TextEditingController(text: attraction?['description'] ?? ''),
+      'image_url': TextEditingController(text: attraction?['image_url'] ?? ''),
+      'name': TextEditingController(text: attraction?['name'] ?? ''),
+      'subCategory': TextEditingController(text: attraction?['subCategory'] ?? ''),
+      'rating': TextEditingController(text: attraction?['rating']?.toString() ?? ''),
+      'longitude': TextEditingController(text: attraction?['longitude']?.toString() ?? ''),
+      'latitude': TextEditingController(text: attraction?['latitude']?.toString() ?? ''),
+      'location': TextEditingController(text: attraction?['location'] ?? ''),
+    };
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: Form(
+          key: key,
+          child: Column(children: [
+            Row(children: [
+              Text(attraction == null ? 'Add New Attraction' : 'Edit Attraction',
+                  style:
+                      const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close))
+            ]),
+            const Divider(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(children: [
+                  _buildFormField(c['description']!, 'Description'),
+                  _buildFormField(c['image_url']!, 'Image URL'),
+                  _buildFormField(c['name']!, 'Attraction Name'),
+                  _buildFormField(c['subCategory']!, 'SubCategory'),
+                  _buildFormField(c['rating']!, 'Rating', isNum: true),
+                  _buildFormField(c['longitude']!, 'Longitude', isNum: true),
+                  _buildFormField(c['latitude']!, 'Latitude', isNum: true),
+                  _buildFormField(c['location']!, 'Location'),
+                ]),
+              ),
+            ),
+            const SizedBox(height: 20),
+            GradientButton(
+              onPressed: () {
+                if (key.currentState!.validate()) {
+                  final data = {
+                    'description': c['description']!.text,
+                    'image_url': c['image_url']!.text,
+                    'name': c['name']!.text,
+                    'subCategory': c['subCategory']!.text,
+                    'rating': double.tryParse(c['rating']!.text) ?? 0.0,
+                    'longitude': double.tryParse(c['longitude']!.text) ?? 0.0,
+                    'latitude': double.tryParse(c['latitude']!.text) ?? 0.0,
+                    'location': c['location']!.text,
+                  };
+                  if (attraction == null) {
+                    FirebaseFirestore.instance
+                        .collection('multan')
+                        .add(data)
+                        .then((_) {
+                      fetchData();
+                      Navigator.pop(context);
+                    });
+                  } else {
+                    updateData(attraction['id'], data);
+                    Navigator.pop(context);
+                  }
+                }
+              },
+              child: Text(attraction == null ? 'ADD ATTRACTION' : 'SAVE CHANGES'),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  /* ----------------------------------------------------------------------- */
+  /*                                 BUILD                                   */
+  /* ----------------------------------------------------------------------- */
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
+      appBar: AppBar(
+        systemOverlayStyle:
+            const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
+        title: const Text('Multan Attractions',
+            style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+        flexibleSpace:
+            Container(decoration: const BoxDecoration(gradient: kGradient)),
+        actions: [
+          IconButton(icon: const GradientIcon(Icons.refresh), onPressed: fetchData),
+          IconButton(icon: const GradientIcon(Icons.add), onPressed: () => _showAddEditSheet()),
+        ],
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: Offset(0, 4))
+                    ],
+                  ),
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: (q) => setState(() {
+                      _filteredProducts = _products.where((p) {
+                        final n = p['name'].toString().toLowerCase();
+                        final d = p['description'].toString().toLowerCase();
+                        return n.contains(q.toLowerCase()) ||
+                            d.contains(q.toLowerCase());
+                      }).toList();
+                    }),
+                    decoration: InputDecoration(
+                      hintText: 'Search attractions...',
+                      prefixIcon: const GradientIcon(Icons.search),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 15, horizontal: 20),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildSortButton('Rating', Icons.star),
+                      _buildSortButton('Name', Icons.sort_by_alpha),
+                    ]),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: _filteredProducts.isEmpty
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          GradientIcon(Icons.search_off, size: 60),
+                          SizedBox(height: 8),
+                          Text('No attractions found'),
+                        ],
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        itemCount: _filteredProducts.length,
+                        itemBuilder: (_, i) => _buildCard(_filteredProducts[i]),
+                      ),
+              ),
+            ]),
+      floatingActionButton:
+          GradientActionButton(onPressed: () => _showAddEditSheet()),
     );
   }
 }

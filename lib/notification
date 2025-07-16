@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:city_guide_app/Admin/Islamabad.dart';
 import 'package:city_guide_app/Admin/abbottabad.dart';
-import 'package:city_guide_app/Admin/category.dart';
+// import 'package:city_guide_app/Admin/category.dart';
 import 'package:city_guide_app/Admin/karachi.dart';
 import 'package:city_guide_app/Admin/lahore.dart';
 import 'package:city_guide_app/Admin/multan.dart';
@@ -20,6 +20,7 @@ import 'package:city_guide_app/Admin/user_manage.dart';
 import 'package:city_guide_app/Admin/restaurants.dart';
 import 'package:city_guide_app/splash.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -277,7 +278,53 @@ class RoleSelectorScreen extends StatelessWidget {
   }
 }
 
-class NotificationModal extends StatelessWidget {
+class NotificationService {
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  static Future<void> sendNotification({
+    required String type,
+    required String title,
+    required String message,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      await _firestore.collection('notifications').add({
+        'type': type,
+        'title': title,
+        'message': message,
+        'data': data,
+        'timestamp': FieldValue.serverTimestamp(),
+        'read': false,
+        'adminId': FirebaseAuth.instance.currentUser?.uid,
+      });
+    } catch (e) {
+      print('Error sending notification: $e');
+    }
+  }
+
+  static Future<void> markAsRead(String notificationId) async {
+    await _firestore.collection('notifications').doc(notificationId).update({
+      'read': true,
+    });
+  }
+
+  static Future<void> markAllAsRead() async {
+    final query =
+        await _firestore
+            .collection('notifications')
+            .where('adminId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+            .where('read', isEqualTo: false)
+            .get();
+
+    final batch = _firestore.batch();
+    for (var doc in query.docs) {
+      batch.update(doc.reference, {'read': true});
+    }
+    await batch.commit();
+  }
+}
+
+class NotificationModal extends StatefulWidget {
   final int newUsers;
   final int newAttractions;
   final int newCities;
@@ -294,10 +341,32 @@ class NotificationModal extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _NotificationModalState createState() => _NotificationModalState();
+}
+
+class _NotificationModalState extends State<NotificationModal> {
+  late Stream<QuerySnapshot> _notificationsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationsStream =
+        FirebaseFirestore.instance
+            .collection('notifications')
+            .where('adminId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+            .orderBy('timestamp', descending: true)
+            .snapshots();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        width: double.infinity,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -327,63 +396,97 @@ class NotificationModal extends StatelessWidget {
             SizedBox(height: 10),
             Divider(),
             SizedBox(height: 10),
-            _buildNotificationItem(
-              icon: Icons.person_add,
-              title: 'New Users',
-              count: newUsers,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => UserManagementScreen(),
-                  ),
-                );
-              },
-            ),
-            _buildNotificationItem(
-              icon: Icons.place,
-              title: 'New Attractions',
-              count: newAttractions,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Attractions()),
-                );
-              },
-            ),
-            _buildNotificationItem(
-              icon: Icons.location_city,
-              title: 'New Cities',
-              count: newCities,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CitiesAdminPanel()),
-                );
-              },
-            ),
-            _buildNotificationItem(
-              icon: Icons.category,
-              title: 'New Categories',
-              count: newCategories,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CategoryAdminPanel()),
-                );
-              },
-            ),
-            _buildNotificationItem(
-              icon: Icons.reviews,
-              title: 'New Reviews',
-              count: newReviews,
-              onTap: () {
-                Navigator.pop(context);
-              },
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _notificationsStream,
+                builder: (context, snapshot) {
+                  // if (snapshot.hasError) {
+                  //   return Center(child: Text('Error loading notifications'));
+                  // }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  final notifications = snapshot.data!.docs;
+
+                  if (notifications.isEmpty) {
+                    return Center(child: Text('No notifications yet'));
+                  }
+
+                  final groupedNotifications =
+                      <String, List<DocumentSnapshot>>{};
+                  for (var notification in notifications) {
+                    final type = notification['type'];
+                    if (!groupedNotifications.containsKey(type)) {
+                      groupedNotifications[type] = [];
+                    }
+                    groupedNotifications[type]!.add(notification);
+                  }
+
+                  return ListView(
+                    children: [
+                      if (groupedNotifications.containsKey('users'))
+                        _buildNotificationSection(
+                          context: context,
+                          icon: Icons.person_add,
+                          title: 'New Users',
+                          notifications: groupedNotifications['users']!,
+                          onTap: () {
+                            Navigator.pop(context);
+                            // Add your navigation
+                          },
+                        ),
+                      if (groupedNotifications.containsKey('attractions'))
+                        _buildNotificationSection(
+                          context: context,
+                          icon: Icons.place,
+                          title: 'New Attractions',
+                          notifications: groupedNotifications['attractions']!,
+                          onTap: () {
+                            Navigator.pop(context);
+                            // Add your navigation
+                          },
+                        ),
+                      if (groupedNotifications.containsKey('cities'))
+                        _buildNotificationSection(
+                          context: context,
+                          icon: Icons.location_city,
+                          title: 'New Cities',
+                          notifications: groupedNotifications['cities']!,
+                          onTap: () {
+                            Navigator.pop(context);
+                            // Add your navigation
+                          },
+                        ),
+                      if (groupedNotifications.containsKey('categories'))
+                        _buildNotificationSection(
+                          context: context,
+                          icon: Icons.category,
+                          title: 'New Categories',
+                          notifications: groupedNotifications['categories']!,
+                          onTap: () {
+                            Navigator.pop(context);
+                            // Add your navigation
+                          },
+                        ),
+                      if (groupedNotifications.containsKey('reviews'))
+                        _buildNotificationSection(
+                          context: context,
+                          icon: Icons.reviews,
+                          title: 'New Reviews',
+                          notifications: groupedNotifications['reviews']!,
+                          onTap: () {
+                            Navigator.pop(context);
+                            // Add navigation for reviews
+                          },
+                        ),
+                    ],
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -391,38 +494,132 @@ class NotificationModal extends StatelessWidget {
     );
   }
 
-  Widget _buildNotificationItem({
+  Widget _buildNotificationSection({
+    required BuildContext context,
     required IconData icon,
     required String title,
-    required int count,
+    required List<DocumentSnapshot> notifications,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Container(
-        padding: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.indigo.withOpacity(0.1),
-          shape: BoxShape.circle,
+    final unreadCount =
+        notifications.where((n) => !(n['read'] ?? false)).length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          leading: Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.indigo.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.indigo),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          trailing:
+              unreadCount > 0
+                  ? Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      unreadCount.toString(),
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  )
+                  : null,
+          onTap: onTap,
         ),
-        child: Icon(icon, color: Colors.indigo),
-      ),
-      title: Text(title, style: TextStyle(fontFamily: 'Poppins')),
-      trailing:
-          count > 0
-              ? Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  count.toString(),
-                  style: TextStyle(color: Colors.white),
-                ),
-              )
-              : null,
-      onTap: onTap,
+        ...notifications
+            .map((notification) => _buildNotificationItem(notification))
+            .toList(),
+        Divider(),
+      ],
     );
+  }
+
+  Widget _buildNotificationItem(DocumentSnapshot notification) {
+    final data = notification.data() as Map<String, dynamic>;
+    final isRead = data['read'] ?? false;
+    final timestamp =
+        (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+    final timeAgo = _formatTimeAgo(timestamp);
+
+    return InkWell(
+      onTap: () async {
+        await NotificationService.markAsRead(notification.id);
+        // Navigation logic can go here
+      },
+      child: Container(
+        color: isRead ? Colors.transparent : Colors.blue.withOpacity(0.05),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    data['title'] ?? 'Notification',
+                    style: TextStyle(
+                      fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+                if (!isRead)
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(height: 4),
+            Text(
+              data['message'] ?? '',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              timeAgo,
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTimeAgo(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inSeconds < 60) return 'Just now';
+    if (difference.inMinutes < 60) return '${difference.inMinutes} min ago';
+    if (difference.inHours < 24) return '${difference.inHours} hrs ago';
+    if (difference.inDays < 7) return '${difference.inDays} days ago';
+    return DateFormat('MMM d, yyyy').format(date);
   }
 }
 

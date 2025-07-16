@@ -2,6 +2,116 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// ------------------------------------------------------------
+/// Gradient utilities used across the screen
+/// ------------------------------------------------------------
+const LinearGradient kGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [
+    Color(0xFF283593),
+    Color(0xFF42A5F5),
+  ], // indigo.shade700 & blue.shade500
+);
+
+/// Icon rendered with the primary gradient
+class GradientIcon extends StatelessWidget {
+  final IconData icon;
+  final double size;
+  const GradientIcon(this.icon, {Key? key, this.size = 24}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (Rect bounds) {
+        return kGradient.createShader(Rect.fromLTWH(0, 0, size, size));
+      },
+      blendMode: BlendMode.srcIn,
+      child: Icon(icon, size: size, color: Colors.white),
+    );
+  }
+}
+
+/// Button with gradient background that keeps Material ripple
+class GradientButton extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onPressed;
+  final double borderRadius;
+  const GradientButton({
+    Key? key,
+    required this.child,
+    required this.onPressed,
+    this.borderRadius = 12,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: kGradient,
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 15.0,
+                horizontal: 8,
+              ),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Circular button (mini‑FAB style) with gradient background
+class GradientActionButton extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onPressed;
+  const GradientActionButton({
+    Key? key,
+    required this.child,
+    required this.onPressed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(
+            12,
+          ), // Adjust this value for more/less rounded corners
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.indigo.shade700, Colors.blue.shade500],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 6,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(Icons.add, color: Colors.white, size: 28),
+      ),
+    );
+  }
+}
+
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
 
@@ -11,7 +121,7 @@ class UserManagementScreen extends StatefulWidget {
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
   List<Map<String, dynamic>> _users = [];
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
   bool _isSearching = false;
 
@@ -82,10 +192,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text(
-              'Delete User',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-            ),
+            title: const GradientIcon(Icons.warning, size: 32),
             content: Text('Are you sure you want to delete "$userName"?'),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
@@ -93,20 +200,18 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text('CANCEL', style: TextStyle(color: Colors.grey)),
+                child: const Text('CANCEL'),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
+              GradientButton(
                 onPressed: () {
                   _deleteUser(userId);
                   Navigator.of(context).pop();
                 },
-                child: Text('DELETE', style: TextStyle(color: Colors.white)),
+                child: const Text(
+                  'DELETE',
+                  style: TextStyle(color: Colors.white),
+                ),
+                borderRadius: 10,
               ),
             ],
           ),
@@ -126,17 +231,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       builder:
           (context) => Container(
             height: MediaQuery.of(context).size.height * 0.85,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
             ),
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       'Edit User',
                       style: TextStyle(
                         fontSize: 22,
@@ -144,12 +249,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.close),
+                      icon: const Icon(Icons.close),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
-                Divider(),
+                const Divider(),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Form(
@@ -161,13 +266,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             'Name',
                             Icons.person,
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           _buildTextField(
                             _emailController,
                             'Email',
                             Icons.email,
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           _buildTextField(
                             _passwordController,
                             'Password',
@@ -178,35 +283,22 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.indigo,
-                          padding: EdgeInsets.symmetric(vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            _updateUser(user['id'], {
-                              'name': _nameController.text,
-                              'email': _emailController.text,
-                              'password': _passwordController.text,
-                            });
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        child: Text(
-                          'SAVE CHANGES',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 20),
+                GradientButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      _updateUser(user['id'], {
+                        'name': _nameController.text,
+                        'email': _emailController.text,
+                        'password': _passwordController.text,
+                      });
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: const Text(
+                    'SAVE CHANGES',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
@@ -227,17 +319,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       builder:
           (context) => Container(
             height: MediaQuery.of(context).size.height * 0.85,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
             ),
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       'Add New User',
                       style: TextStyle(
                         fontSize: 22,
@@ -245,12 +337,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.close),
+                      icon: const Icon(Icons.close),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
-                Divider(),
+                const Divider(),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Form(
@@ -262,13 +354,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             'Name',
                             Icons.person,
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           _buildTextField(
                             _emailController,
                             'Email',
                             Icons.email,
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           _buildTextField(
                             _passwordController,
                             'Password',
@@ -279,47 +371,31 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.indigo,
-                          padding: EdgeInsets.symmetric(vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            try {
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .add({
-                                    'name': _nameController.text,
-                                    'email': _emailController.text,
-                                    'password': _passwordController.text,
-                                    'images': '',
-                                  });
-                              _showSnackBar('User added successfully!');
-                              Navigator.of(context).pop();
-                              _fetchUsers();
-                            } catch (e) {
-                              _showSnackBar(
-                                'Error adding user: $e',
-                                isError: true,
-                              );
-                            }
-                          }
-                        },
-                        child: Text(
-                          'ADD USER',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 20),
+                GradientButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      try {
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .add({
+                              'name': _nameController.text,
+                              'email': _emailController.text,
+                              'password': _passwordController.text,
+                              'images': '',
+                            });
+                        _showSnackBar('User added successfully!');
+                        Navigator.of(context).pop();
+                        _fetchUsers();
+                      } catch (e) {
+                        _showSnackBar('Error adding user: $e', isError: true);
+                      }
+                    }
+                  },
+                  child: const Text(
+                    'ADD USER',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
@@ -336,17 +412,20 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.indigo),
-        prefixIcon: Icon(icon, color: Colors.indigo),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(2.0),
+          child: GradientIcon(icon),
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.indigo),
+          borderSide: const BorderSide(color: Colors.transparent),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.indigo, width: 2),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 15,
+          horizontal: 15,
         ),
-        contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -360,48 +439,35 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F7FA),
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        systemOverlayStyle: SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent, 
-          statusBarIconBrightness:
-              Brightness.light, 
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
         ),
-
-        // --- title ---
-        title: Text(
+        title: const Text(
           'User Management',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(15)),
         ),
         iconTheme: IconThemeData(color: Colors.white),
         actionsIconTheme: IconThemeData(color: Colors.white),
         flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.indigo.shade700, Colors.blue.shade500],
-            ),
-          ),
+          decoration: BoxDecoration(gradient: kGradient),
         ),
-
-        // action buttons
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const GradientIcon(Icons.refresh),
             onPressed: _fetchUsers,
             tooltip: 'Refresh',
           ),
         ],
       ),
-
       body: Column(
         children: [
           Padding(
@@ -410,7 +476,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 10,
@@ -422,16 +488,16 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Search users...',
-                  prefixIcon: Icon(Icons.search, color: Colors.indigo),
+                  prefixIcon: const GradientIcon(Icons.search),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
+                  contentPadding: const EdgeInsets.symmetric(
                     vertical: 15,
                     horizontal: 20,
                   ),
                   suffixIcon:
                       _isSearching
                           ? IconButton(
-                            icon: Icon(Icons.clear, color: Colors.grey),
+                            icon: const Icon(Icons.clear, color: Colors.grey),
                             onPressed: () {
                               _searchController.clear();
                               setState(() {
@@ -466,48 +532,41 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           Expanded(
             child:
                 _isLoading
-                    ? Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.indigo,
-                        ),
-                        strokeWidth: 3,
-                      ),
-                    )
+                    ? const Center(child: CircularProgressIndicator())
                     : _users.isEmpty
                     ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.people_outline,
-                            size: 60,
-                            color: Colors.grey,
-                          ),
-                          SizedBox(height: 16),
+                          const GradientIcon(Icons.people_outline, size: 60),
+                          const SizedBox(height: 16),
                           Text(
                             _isSearching
                                 ? 'No matching users found'
                                 : 'No users available',
-                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
+                            ),
                           ),
+                          const SizedBox(height: 8),
                           if (!_isSearching)
-                            TextButton(
+                            GradientButton(
                               onPressed: _showAddUserDialog,
-                              child: Text(
+                              child: const Text(
                                 'Add First User',
                                 style: TextStyle(
-                                  color: Colors.indigo,
-                                  fontSize: 16,
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              borderRadius: 8,
                             ),
                         ],
                       ),
                     )
                     : ListView.builder(
-                      padding: EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.only(bottom: 16),
                       itemCount: _users.length,
                       itemBuilder: (context, index) {
                         final user = _users[index];
@@ -517,11 +576,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: GradientActionButton(
+        child: const GradientIcon(Icons.add, size: 28),
         onPressed: _showAddUserDialog,
-        backgroundColor: Colors.indigo,
-        child: Icon(Icons.add, color: Colors.white, size: 28),
-        elevation: 4,
       ),
     );
   }

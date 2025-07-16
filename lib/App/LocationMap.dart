@@ -37,9 +37,9 @@ class _LocationMapPopupState extends State<LocationMapPopup> {
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not launch maps')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not launch maps')));
     }
   }
 
@@ -87,7 +87,7 @@ class _LocationMapPopupState extends State<LocationMapPopup> {
               ),
             ),
           ),
-          
+
           // Title and close button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -131,11 +131,13 @@ class _LocationMapPopupState extends State<LocationMapPopup> {
                     options: MapOptions(
                       center: LatLng(widget.latitude, widget.longitude),
                       zoom: _zoomLevel,
-                      interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                      interactiveFlags:
+                          InteractiveFlag.all & ~InteractiveFlag.rotate,
                     ),
                     children: [
                       TileLayer(
-                        urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        urlTemplate:
+                            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                         subdomains: ['a', 'b', 'c'],
                         userAgentPackageName: 'com.example.app',
                       ),
@@ -145,11 +147,13 @@ class _LocationMapPopupState extends State<LocationMapPopup> {
                             point: LatLng(widget.latitude, widget.longitude),
                             width: 50,
                             height: 50,
-                            builder: (ctx) => Icon(
-                              Icons.location_pin,
-                              color: Colors.red,
-                              size: 50,
-                            ).animate().shakeX(),
+                            builder:
+                                (ctx) =>
+                                    Icon(
+                                      Icons.location_pin,
+                                      color: Colors.red,
+                                      size: 50,
+                                    ).animate().shakeX(),
                           ),
                         ],
                       ),
@@ -203,7 +207,10 @@ class _LocationMapPopupState extends State<LocationMapPopup> {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: Icon(Icons.directions, color: Colors.deepPurple),
-                    label: Text('Directions', style: TextStyle(color: Colors.deepPurple)),
+                    label: Text(
+                      'Directions',
+                      style: TextStyle(color: Colors.deepPurple),
+                    ),
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       side: BorderSide(color: Colors.deepPurple),
@@ -228,9 +235,9 @@ class _LocationMapPopupState extends State<LocationMapPopup> {
                     ),
                     onPressed: () {
                       // Implement share functionality
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Share location')),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('Share location')));
                     },
                   ),
                 ),
@@ -239,9 +246,6 @@ class _LocationMapPopupState extends State<LocationMapPopup> {
           ),
         ],
       ),
-    ).animate().slide(
-        begin: const Offset(0, 0.5),
-      curve: Curves.easeOutQuart,
-    );
+    ).animate().slide(begin: const Offset(0, 0.5), curve: Curves.easeOutQuart);
   }
 }

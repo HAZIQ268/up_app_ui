@@ -64,6 +64,7 @@ dependencies:
   google_fonts: ^4.0.4
   glassmorphism: ^3.0.0
   google_sign_in: ^6.1.5
+  intl: ^0.20.2
 
 
  
